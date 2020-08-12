@@ -244,7 +244,7 @@ var ts;
     // If changing the text in this section, be sure to test `configurePrerelease` too.
     ts.versionMajorMinor = "3.9";
     /** The version of the TypeScript compiler release */
-    ts.version = "3.9.2";
+    ts.version = "3.9.7";
     /**
      * Returns the native Map implementation if it is available and compatible (i.e. supports iteration).
      */
@@ -2677,6 +2677,7 @@ var ts;
 /* @internal */
 var ts;
 (function (ts) {
+    var _a;
     var nullLogger = {
         logEvent: ts.noop,
         logErrEvent: ts.noop,
@@ -2703,9 +2704,10 @@ var ts;
     // See https://github.com/microsoft/typescript-etw for more information
     var etwModule;
     try {
-        // require() will throw an exception if the module is not installed
+        var etwModulePath = (_a = process.env.TS_ETW_MODULE_PATH) !== null && _a !== void 0 ? _a : "./node_modules/@microsoft/typescript-etw";
+        // require() will throw an exception if the module is not found
         // It may also return undefined if not installed properly
-        etwModule = require("@microsoft/typescript-etw");
+        etwModule = require(etwModulePath);
     }
     catch (e) {
         etwModule = undefined;
@@ -7682,6 +7684,7 @@ var ts;
         Cannot_find_a_tsconfig_json_file_at_the_current_directory_Colon_0: diag(5081, ts.DiagnosticCategory.Error, "Cannot_find_a_tsconfig_json_file_at_the_current_directory_Colon_0_5081", "Cannot find a tsconfig.json file at the current directory: {0}."),
         _0_could_be_instantiated_with_an_arbitrary_type_which_could_be_unrelated_to_1: diag(5082, ts.DiagnosticCategory.Error, "_0_could_be_instantiated_with_an_arbitrary_type_which_could_be_unrelated_to_1_5082", "'{0}' could be instantiated with an arbitrary type which could be unrelated to '{1}'."),
         Cannot_read_file_0: diag(5083, ts.DiagnosticCategory.Error, "Cannot_read_file_0_5083", "Cannot read file '{0}'."),
+        The_inferred_type_of_0_references_a_type_with_a_cyclic_structure_which_cannot_be_trivially_serialized_A_type_annotation_is_necessary: diag(5088, ts.DiagnosticCategory.Error, "The_inferred_type_of_0_references_a_type_with_a_cyclic_structure_which_cannot_be_trivially_serialize_5088", "The inferred type of '{0}' references a type with a cyclic structure which cannot be trivially serialized. A type annotation is necessary."),
         Generates_a_sourcemap_for_each_corresponding_d_ts_file: diag(6000, ts.DiagnosticCategory.Message, "Generates_a_sourcemap_for_each_corresponding_d_ts_file_6000", "Generates a sourcemap for each corresponding '.d.ts' file."),
         Concatenate_and_emit_output_to_single_file: diag(6001, ts.DiagnosticCategory.Message, "Concatenate_and_emit_output_to_single_file_6001", "Concatenate and emit output to single file."),
         Generates_corresponding_d_ts_file: diag(6002, ts.DiagnosticCategory.Message, "Generates_corresponding_d_ts_file_6002", "Generates corresponding '.d.ts' file."),
@@ -15828,7 +15831,7 @@ var ts;
         if (!(name.kind === 154 /* ComputedPropertyName */ || name.kind === 195 /* ElementAccessExpression */)) {
             return false;
         }
-        var expr = ts.isElementAccessExpression(name) ? name.argumentExpression : name.expression;
+        var expr = ts.isElementAccessExpression(name) ? skipParentheses(name.argumentExpression) : name.expression;
         return !isStringOrNumericLiteralLike(expr) &&
             !isSignedNumericLiteral(expr) &&
             !isWellKnownSymbolSyntactically(expr);
@@ -38822,8 +38825,8 @@ var ts;
                     context.inferTypeParameters = type.root.inferTypeParameters;
                     var extendsTypeNode = typeToTypeNodeHelper(type.extendsType, context);
                     context.inferTypeParameters = saveInferTypeParameters;
-                    var trueTypeNode = typeToTypeNodeHelper(getTrueTypeFromConditionalType(type), context);
-                    var falseTypeNode = typeToTypeNodeHelper(getFalseTypeFromConditionalType(type), context);
+                    var trueTypeNode = typeToTypeNodeOrCircularityElision(getTrueTypeFromConditionalType(type));
+                    var falseTypeNode = typeToTypeNodeOrCircularityElision(getFalseTypeFromConditionalType(type));
                     context.approximateLength += 15;
                     return ts.createConditionalTypeNode(checkTypeNode, extendsTypeNode, trueTypeNode, falseTypeNode);
                 }
@@ -38831,6 +38834,20 @@ var ts;
                     return typeToTypeNodeHelper(type.baseType, context);
                 }
                 return ts.Debug.fail("Should be unreachable.");
+                function typeToTypeNodeOrCircularityElision(type) {
+                    var _a, _b;
+                    if (type.flags & 1048576 /* Union */) {
+                        if (context.visitedTypes && context.visitedTypes.has("" + getTypeId(type))) {
+                            if (!(context.flags & 131072 /* AllowAnonymousIdentifier */)) {
+                                context.encounteredError = true;
+                                (_b = (_a = context.tracker) === null || _a === void 0 ? void 0 : _a.reportCyclicStructureError) === null || _b === void 0 ? void 0 : _b.call(_a);
+                            }
+                            return createElidedInformationPlaceholder(context);
+                        }
+                        return visitAndTransformType(type, function (type) { return typeToTypeNodeHelper(type, context); });
+                    }
+                    return typeToTypeNodeHelper(type, context);
+                }
                 function createMappedTypeNodeFromType(type) {
                     ts.Debug.assert(!!(type.flags & 524288 /* Object */));
                     var readonlyToken = type.declaration.readonlyToken ? ts.createToken(type.declaration.readonlyToken.kind) : undefined;
@@ -44040,7 +44057,7 @@ var ts;
             return type.resolvedProperties;
         }
         function getPropertiesOfType(type) {
-            type = getApparentType(getReducedType(type));
+            type = getReducedApparentType(type);
             return type.flags & 3145728 /* UnionOrIntersection */ ?
                 getPropertiesOfUnionOrIntersectionType(type) :
                 getPropertiesOfObjectType(type);
@@ -44373,6 +44390,13 @@ var ts;
                                                 t.flags & 2 /* Unknown */ && !strictNullChecks ? emptyObjectType :
                                                     t;
         }
+        function getReducedApparentType(type) {
+            // Since getApparentType may return a non-reduced union or intersection type, we need to perform
+            // type reduction both before and after obtaining the apparent type. For example, given a type parameter
+            // 'T extends A | B', the type 'T & X' becomes 'A & X | B & X' after obtaining the apparent type, and
+            // that type may need futher reduction to remove empty intersections.
+            return getReducedType(getApparentType(getReducedType(type)));
+        }
         function createUnionOrIntersectionProperty(containingType, name) {
             var singleProp;
             var propSet;
@@ -44583,7 +44607,7 @@ var ts;
          * @param name a name of property to look up in a given type
          */
         function getPropertyOfType(type, name) {
-            type = getApparentType(getReducedType(type));
+            type = getReducedApparentType(type);
             if (type.flags & 524288 /* Object */) {
                 var resolved = resolveStructuredTypeMembers(type);
                 var symbol = resolved.members.get(name);
@@ -44619,7 +44643,7 @@ var ts;
          * maps primitive types and type parameters are to their apparent types.
          */
         function getSignaturesOfType(type, kind) {
-            return getSignaturesOfStructuredType(getApparentType(getReducedType(type)), kind);
+            return getSignaturesOfStructuredType(getReducedApparentType(type), kind);
         }
         function getIndexInfoOfStructuredType(type, kind) {
             if (type.flags & 3670016 /* StructuredType */) {
@@ -44634,12 +44658,12 @@ var ts;
         // Return the indexing info of the given kind in the given type. Creates synthetic union index types when necessary and
         // maps primitive types and type parameters are to their apparent types.
         function getIndexInfoOfType(type, kind) {
-            return getIndexInfoOfStructuredType(getApparentType(getReducedType(type)), kind);
+            return getIndexInfoOfStructuredType(getReducedApparentType(type), kind);
         }
         // Return the index type of the given kind in the given type. Creates synthetic union index types when necessary and
         // maps primitive types and type parameters are to their apparent types.
         function getIndexTypeOfType(type, kind) {
-            return getIndexTypeOfStructuredType(getApparentType(getReducedType(type)), kind);
+            return getIndexTypeOfStructuredType(getReducedApparentType(type), kind);
         }
         function getImplicitIndexTypeOfType(type, kind) {
             if (isObjectTypeWithInferableIndex(type)) {
@@ -46465,10 +46489,12 @@ var ts;
             }
             return links.resolvedType;
         }
-        function createIndexedAccessType(objectType, indexType) {
+        function createIndexedAccessType(objectType, indexType, aliasSymbol, aliasTypeArguments) {
             var type = createType(8388608 /* IndexedAccess */);
             type.objectType = objectType;
             type.indexType = indexType;
+            type.aliasSymbol = aliasSymbol;
+            type.aliasTypeArguments = aliasTypeArguments;
             return type;
         }
         /**
@@ -46777,10 +46803,10 @@ var ts;
             var templateMapper = combineTypeMappers(objectType.mapper, mapper);
             return instantiateType(getTemplateTypeFromMappedType(objectType), templateMapper);
         }
-        function getIndexedAccessType(objectType, indexType, accessNode) {
-            return getIndexedAccessTypeOrUndefined(objectType, indexType, accessNode, 0 /* None */) || (accessNode ? errorType : unknownType);
+        function getIndexedAccessType(objectType, indexType, accessNode, aliasSymbol, aliasTypeArguments) {
+            return getIndexedAccessTypeOrUndefined(objectType, indexType, accessNode, 0 /* None */, aliasSymbol, aliasTypeArguments) || (accessNode ? errorType : unknownType);
         }
-        function getIndexedAccessTypeOrUndefined(objectType, indexType, accessNode, accessFlags) {
+        function getIndexedAccessTypeOrUndefined(objectType, indexType, accessNode, accessFlags, aliasSymbol, aliasTypeArguments) {
             if (accessFlags === void 0) { accessFlags = 0 /* None */; }
             if (objectType === wildcardType || indexType === wildcardType) {
                 return wildcardType;
@@ -46803,14 +46829,14 @@ var ts;
                 var id = objectType.id + "," + indexType.id;
                 var type = indexedAccessTypes.get(id);
                 if (!type) {
-                    indexedAccessTypes.set(id, type = createIndexedAccessType(objectType, indexType));
+                    indexedAccessTypes.set(id, type = createIndexedAccessType(objectType, indexType, aliasSymbol, aliasTypeArguments));
                 }
                 return type;
             }
             // In the following we resolve T[K] to the type of the property in T selected by K.
             // We treat boolean as different from other unions to improve errors;
             // skipping straight to getPropertyTypeForIndexType gives errors with 'boolean' instead of 'true'.
-            var apparentObjectType = getApparentType(getReducedType(objectType));
+            var apparentObjectType = getReducedApparentType(objectType);
             if (indexType.flags & 1048576 /* Union */ && !(indexType.flags & 16 /* Boolean */)) {
                 var propTypes = [];
                 var wasMissingProp = false;
@@ -46832,7 +46858,7 @@ var ts;
                 if (wasMissingProp) {
                     return undefined;
                 }
-                return accessFlags & 2 /* Writing */ ? getIntersectionType(propTypes) : getUnionType(propTypes);
+                return accessFlags & 2 /* Writing */ ? getIntersectionType(propTypes, aliasSymbol, aliasTypeArguments) : getUnionType(propTypes, 1 /* Literal */, aliasSymbol, aliasTypeArguments);
             }
             return getPropertyTypeForIndexType(objectType, apparentObjectType, indexType, indexType, /* supressNoImplicitAnyError */ false, accessNode, accessFlags | 4 /* CacheSymbol */);
         }
@@ -46841,7 +46867,8 @@ var ts;
             if (!links.resolvedType) {
                 var objectType = getTypeFromTypeNode(node.objectType);
                 var indexType = getTypeFromTypeNode(node.indexType);
-                var resolved = getIndexedAccessType(objectType, indexType, node);
+                var potentialAlias = getAliasSymbolForTypeNode(node);
+                var resolved = getIndexedAccessType(objectType, indexType, node, potentialAlias, getTypeArgumentsForAliasSymbol(potentialAlias));
                 links.resolvedType = resolved.flags & 8388608 /* IndexedAccess */ &&
                     resolved.objectType === objectType &&
                     resolved.indexType === indexType ?
@@ -47897,7 +47924,7 @@ var ts;
                 return getIndexType(instantiateType(type.type, mapper));
             }
             if (flags & 8388608 /* IndexedAccess */) {
-                return getIndexedAccessType(instantiateType(type.objectType, mapper), instantiateType(type.indexType, mapper));
+                return getIndexedAccessType(instantiateType(type.objectType, mapper), instantiateType(type.indexType, mapper), /*accessNode*/ undefined, type.aliasSymbol, instantiateTypes(type.aliasTypeArguments, mapper));
             }
             if (flags & 16777216 /* Conditional */) {
                 return getConditionalTypeInstantiation(type, combineTypeMappers(type.mapper, mapper));
@@ -55442,6 +55469,9 @@ var ts;
                     return ts.Debug.assertNever(kind);
             }
         }
+        function isCircularMappedProperty(symbol) {
+            return !!(ts.getCheckFlags(symbol) & 262144 /* Mapped */ && !symbol.type && findResolutionCycleStartIndex(symbol, 0 /* Type */) >= 0);
+        }
         function getTypeOfPropertyOfContextualType(type, name) {
             return mapType(type, function (t) {
                 if (isGenericMappedType(t)) {
@@ -55455,7 +55485,7 @@ var ts;
                 else if (t.flags & 3670016 /* StructuredType */) {
                     var prop = getPropertyOfType(t, name);
                     if (prop) {
-                        return getTypeOfSymbol(prop);
+                        return isCircularMappedProperty(prop) ? undefined : getTypeOfSymbol(prop);
                     }
                     if (isTupleType(t)) {
                         var restType = getRestTypeOfTupleType(t);
@@ -56499,7 +56529,7 @@ var ts;
                 var right = _a[_i];
                 var left = props.get(right.escapedName);
                 var rightType = getTypeOfSymbol(right);
-                if (left && !maybeTypeOfKind(rightType, 98304 /* Nullable */) && !(maybeTypeOfKind(rightType, 1 /* Any */) && right.flags & 16777216 /* Optional */)) {
+                if (left && !maybeTypeOfKind(rightType, 98304 /* Nullable */) && !(maybeTypeOfKind(rightType, 3 /* AnyOrUnknown */) && right.flags & 16777216 /* Optional */)) {
                     var diagnostic = error(left.valueDeclaration, ts.Diagnostics._0_is_specified_more_than_once_so_this_usage_will_be_overwritten, ts.unescapeLeadingUnderscores(left.escapedName));
                     ts.addRelatedInfo(diagnostic, ts.createDiagnosticForNode(spread, ts.Diagnostics.This_spread_always_overwrites_this_property));
                 }
@@ -77354,13 +77384,16 @@ var ts;
         // Find original source text, since we need to emit the raw strings of the tagged template.
         // The raw strings contain the (escaped) strings of what the user wrote.
         // Examples: `\n` is converted to "\\n", a template string with a newline to "\n".
-        var text = ts.getSourceTextOfNodeFromSourceFile(currentSourceFile, node);
-        // text contains the original source, it will also contain quotes ("`"), dolar signs and braces ("${" and "}"),
-        // thus we need to remove those characters.
-        // First template piece starts with "`", others with "}"
-        // Last template piece ends with "`", others with "${"
-        var isLast = node.kind === 14 /* NoSubstitutionTemplateLiteral */ || node.kind === 17 /* TemplateTail */;
-        text = text.substring(1, text.length - (isLast ? 1 : 2));
+        var text = node.rawText;
+        if (text === undefined) {
+            text = ts.getSourceTextOfNodeFromSourceFile(currentSourceFile, node);
+            // text contains the original source, it will also contain quotes ("`"), dolar signs and braces ("${" and "}"),
+            // thus we need to remove those characters.
+            // First template piece starts with "`", others with "}"
+            // Last template piece ends with "`", others with "${"
+            var isLast = node.kind === 14 /* NoSubstitutionTemplateLiteral */ || node.kind === 17 /* TemplateTail */;
+            text = text.substring(1, text.length - (isLast ? 1 : 2));
+        }
         // Newline normalization:
         // ES6 Spec 11.8.6.1 - Static Semantics of TV's and TRV's
         // <CR><LF> and <CR> LineTerminatorSequences are normalized to <LF> for both TV and TRV.
@@ -77409,9 +77442,10 @@ var ts;
         ClassFacts[ClassFacts["IsNamedExternalExport"] = 16] = "IsNamedExternalExport";
         ClassFacts[ClassFacts["IsDefaultExternalExport"] = 32] = "IsDefaultExternalExport";
         ClassFacts[ClassFacts["IsDerivedClass"] = 64] = "IsDerivedClass";
+        ClassFacts[ClassFacts["UseImmediatelyInvokedFunctionExpression"] = 128] = "UseImmediatelyInvokedFunctionExpression";
         ClassFacts[ClassFacts["HasAnyDecorators"] = 6] = "HasAnyDecorators";
         ClassFacts[ClassFacts["NeedsName"] = 5] = "NeedsName";
-        ClassFacts[ClassFacts["UseImmediatelyInvokedFunctionExpression"] = 7] = "UseImmediatelyInvokedFunctionExpression";
+        ClassFacts[ClassFacts["MayNeedImmediatelyInvokedFunctionExpression"] = 7] = "MayNeedImmediatelyInvokedFunctionExpression";
         ClassFacts[ClassFacts["IsExported"] = 56] = "IsExported";
     })(ClassFacts || (ClassFacts = {}));
     function transformTypeScript(context) {
@@ -77898,6 +77932,8 @@ var ts;
                 facts |= 32 /* IsDefaultExternalExport */;
             else if (isNamedExternalModuleExport(node))
                 facts |= 16 /* IsNamedExternalExport */;
+            if (languageVersion <= 1 /* ES5 */ && (facts & 7 /* MayNeedImmediatelyInvokedFunctionExpression */))
+                facts |= 128 /* UseImmediatelyInvokedFunctionExpression */;
             return facts;
         }
         function hasTypeScriptClassSyntax(node) {
@@ -77915,7 +77951,7 @@ var ts;
             }
             var staticProperties = ts.getProperties(node, /*requireInitializer*/ true, /*isStatic*/ true);
             var facts = getClassFacts(node, staticProperties);
-            if (facts & 7 /* UseImmediatelyInvokedFunctionExpression */) {
+            if (facts & 128 /* UseImmediatelyInvokedFunctionExpression */) {
                 context.startLexicalEnvironment();
             }
             var name = node.name || (facts & 5 /* NeedsName */ ? ts.getGeneratedNameForNode(node) : undefined);
@@ -77927,7 +77963,7 @@ var ts;
             addClassElementDecorationStatements(statements, node, /*isStatic*/ false);
             addClassElementDecorationStatements(statements, node, /*isStatic*/ true);
             addConstructorDecorationStatement(statements, node);
-            if (facts & 7 /* UseImmediatelyInvokedFunctionExpression */) {
+            if (facts & 128 /* UseImmediatelyInvokedFunctionExpression */) {
                 // When we emit a TypeScript class down to ES5, we must wrap it in an IIFE so that the
                 // 'es2015' transformer can properly nest static initializers and decorators. The result
                 // looks something like:
@@ -77953,16 +77989,11 @@ var ts;
                 ts.insertStatementsAfterStandardPrologue(statements, context.endLexicalEnvironment());
                 var iife = ts.createImmediatelyInvokedArrowFunction(statements);
                 ts.setEmitFlags(iife, 33554432 /* TypeScriptClassWrapper */);
-                // Class comment is already added by the ES2015 transform when targeting ES5 or below.
-                // Only add if targetting ES2015+ to prevent duplicates
-                if (languageVersion > 1 /* ES5 */) {
-                    ts.addSyntheticLeadingComment(iife, 3 /* MultiLineCommentTrivia */, "* @class ");
-                }
                 var varStatement = ts.createVariableStatement(
                 /*modifiers*/ undefined, ts.createVariableDeclarationList([
                     ts.createVariableDeclaration(ts.getLocalName(node, /*allowComments*/ false, /*allowSourceMaps*/ false), 
                     /*type*/ undefined, iife)
-                ], languageVersion > 1 /* ES5 */ ? 1 /* Let */ : undefined));
+                ]));
                 ts.setOriginalNode(varStatement, node);
                 ts.setCommentRange(varStatement, node);
                 ts.setSourceMapRange(varStatement, ts.moveRangePastDecorators(node));
@@ -77975,7 +78006,7 @@ var ts;
             if (facts & 8 /* IsExportOfNamespace */) {
                 addExportMemberAssignment(statements, node);
             }
-            else if (facts & 7 /* UseImmediatelyInvokedFunctionExpression */ || facts & 2 /* HasConstructorDecorators */) {
+            else if (facts & 128 /* UseImmediatelyInvokedFunctionExpression */ || facts & 2 /* HasConstructorDecorators */) {
                 if (facts & 32 /* IsDefaultExternalExport */) {
                     statements.push(ts.createExportDefault(ts.getLocalName(node, /*allowComments*/ false, /*allowSourceMaps*/ true)));
                 }
@@ -78002,7 +78033,7 @@ var ts;
             //      ${members}
             //  }
             // we do not emit modifiers on the declaration if we are emitting an IIFE
-            var modifiers = !(facts & 7 /* UseImmediatelyInvokedFunctionExpression */)
+            var modifiers = !(facts & 128 /* UseImmediatelyInvokedFunctionExpression */)
                 ? ts.visitNodes(node.modifiers, modifierVisitor, ts.isModifier)
                 : undefined;
             var classDeclaration = ts.createClassDeclaration(
@@ -90503,7 +90534,7 @@ var ts;
         scoped: false,
         dependencies: [ts.createBindingHelper],
         priority: 2,
-        text: "\n            var __exportStar = (this && this.__exportStar) || function(m, exports) {\n                for (var p in m) if (p !== \"default\" && !exports.hasOwnProperty(p)) __createBinding(exports, m, p);\n            }"
+        text: "\n            var __exportStar = (this && this.__exportStar) || function(m, exports) {\n                for (var p in m) if (p !== \"default\" && !exports.hasOwnProperty(p)) __createBinding(exports, m, p);\n            };"
     };
     function createExportStarHelper(context, module) {
         context.requestEmitHelper(exportStarHelper);
@@ -90522,7 +90553,7 @@ var ts;
         scoped: false,
         dependencies: [ts.createBindingHelper, ts.setModuleDefaultHelper],
         priority: 2,
-        text: "\nvar __importStar = (this && this.__importStar) || function (mod) {\n    if (mod && mod.__esModule) return mod;\n    var result = {};\n    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);\n    __setModuleDefault(result, mod);\n    return result;\n};"
+        text: "\nvar __importStar = (this && this.__importStar) || function (mod) {\n    if (mod && mod.__esModule) return mod;\n    var result = {};\n    if (mod != null) for (var k in mod) if (k !== \"default\" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);\n    __setModuleDefault(result, mod);\n    return result;\n};"
     };
     // emit helper for `import Name from "foo"`
     ts.importDefaultHelper = {
@@ -92623,6 +92654,7 @@ var ts;
             trackSymbol: trackSymbol,
             reportInaccessibleThisError: reportInaccessibleThisError,
             reportInaccessibleUniqueSymbolError: reportInaccessibleUniqueSymbolError,
+            reportCyclicStructureError: reportCyclicStructureError,
             reportPrivateInBaseOfClassExpression: reportPrivateInBaseOfClassExpression,
             reportLikelyUnsafeImportRequiredError: reportLikelyUnsafeImportRequiredError,
             moduleResolverHost: host,
@@ -92707,6 +92739,11 @@ var ts;
         function reportInaccessibleUniqueSymbolError() {
             if (errorNameNode) {
                 context.addDiagnostic(ts.createDiagnosticForNode(errorNameNode, ts.Diagnostics.The_inferred_type_of_0_references_an_inaccessible_1_type_A_type_annotation_is_necessary, ts.declarationNameToString(errorNameNode), "unique symbol"));
+            }
+        }
+        function reportCyclicStructureError() {
+            if (errorNameNode) {
+                context.addDiagnostic(ts.createDiagnosticForNode(errorNameNode, ts.Diagnostics.The_inferred_type_of_0_references_a_type_with_a_cyclic_structure_which_cannot_be_trivially_serialized_A_type_annotation_is_necessary, ts.declarationNameToString(errorNameNode)));
             }
         }
         function reportInaccessibleThisError() {
@@ -110195,8 +110232,8 @@ var ts;
      * The default is CRLF.
      */
     function getNewLineOrDefaultFromHost(host, formatSettings) {
-        return (formatSettings && formatSettings.newLineCharacter) ||
-            (host.getNewLine && host.getNewLine()) ||
+        var _a;
+        return (formatSettings === null || formatSettings === void 0 ? void 0 : formatSettings.newLineCharacter) || ((_a = host.getNewLine) === null || _a === void 0 ? void 0 : _a.call(host)) ||
             carriageReturnLineFeed;
     }
     ts.getNewLineOrDefaultFromHost = getNewLineOrDefaultFromHost;
@@ -120290,7 +120327,7 @@ var ts;
                 }
                 // Delete any subsequent imports.
                 for (var i = 1; i < oldImportDecls.length; i++) {
-                    changeTracker.delete(sourceFile, oldImportDecls[i]);
+                    changeTracker.deleteNode(sourceFile, oldImportDecls[i]);
                 }
             }
         }
@@ -124760,8 +124797,8 @@ var ts;
 (function (ts) {
     var formatting;
     (function (formatting) {
-        function getFormatContext(options) {
-            return { options: options, getRules: getRulesMap() };
+        function getFormatContext(options, host) {
+            return { options: options, getRules: getRulesMap(), host: host };
         }
         formatting.getFormatContext = getFormatContext;
         var rulesMapCache;
@@ -125174,7 +125211,7 @@ var ts;
             return formatting.getFormattingScanner(sourceFile.text, sourceFile.languageVariant, getScanStartPosition(enclosingNode, originalRange, sourceFile), originalRange.end, function (scanner) { return formatSpanWorker(originalRange, enclosingNode, formatting.SmartIndenter.getIndentationForNode(enclosingNode, originalRange, sourceFile, formatContext.options), getOwnOrInheritedDelta(enclosingNode, formatContext.options, sourceFile), scanner, formatContext, requestKind, prepareRangeContainsErrorFunction(sourceFile.parseDiagnostics, originalRange), sourceFile); });
         }
         function formatSpanWorker(originalRange, enclosingNode, initialIndentation, delta, formattingScanner, _a, requestKind, rangeContainsError, sourceFile) {
-            var options = _a.options, getRules = _a.getRules;
+            var options = _a.options, getRules = _a.getRules, host = _a.host;
             // formatting context is used by rules provider
             var formattingContext = new formatting.FormattingContext(sourceFile, requestKind, options);
             var previousRange;
@@ -125844,7 +125881,7 @@ var ts;
                         // edit should not be applied if we have one line feed between elements
                         var lineDelta = currentStartLine - previousStartLine;
                         if (lineDelta !== 1) {
-                            recordReplace(previousRange.end, currentRange.pos - previousRange.end, options.newLineCharacter);
+                            recordReplace(previousRange.end, currentRange.pos - previousRange.end, ts.getNewLineOrDefaultFromHost(host, options));
                             return onLaterLine ? 0 /* None */ : 1 /* LineAdded */;
                         }
                         break;
@@ -126726,6 +126763,10 @@ var ts;
             };
             ChangeTracker.prototype.delete = function (sourceFile, node) {
                 this.deletedNodes.push({ sourceFile: sourceFile, node: node });
+            };
+            ChangeTracker.prototype.deleteNode = function (sourceFile, node, options) {
+                if (options === void 0) { options = { leadingTriviaOption: LeadingTriviaOption.IncludeAll }; }
+                this.deleteRange(sourceFile, getAdjustedRange(sourceFile, node, node, options));
             };
             ChangeTracker.prototype.deleteModifier = function (sourceFile, modifier) {
                 this.deleteRange(sourceFile, { pos: modifier.getStart(sourceFile), end: ts.skipTrivia(sourceFile.text, modifier.end, /*stopAfterLineBreak*/ true) });
@@ -139383,7 +139424,7 @@ var ts;
         function getCompletionEntryDetails(fileName, position, name, formattingOptions, source, preferences) {
             if (preferences === void 0) { preferences = ts.emptyOptions; }
             synchronizeHostData();
-            return ts.Completions.getCompletionEntryDetails(program, log, getValidSourceFile(fileName), position, { name: name, source: source }, host, (formattingOptions && ts.formatting.getFormatContext(formattingOptions)), // TODO: GH#18217
+            return ts.Completions.getCompletionEntryDetails(program, log, getValidSourceFile(fileName), position, { name: name, source: source }, host, (formattingOptions && ts.formatting.getFormatContext(formattingOptions, host)), // TODO: GH#18217
             preferences, cancellationToken);
         }
         function getCompletionEntrySymbol(fileName, position, name, source, preferences) {
@@ -139655,14 +139696,14 @@ var ts;
         }
         function getFormattingEditsForRange(fileName, start, end, options) {
             var sourceFile = syntaxTreeCache.getCurrentSourceFile(fileName);
-            return ts.formatting.formatSelection(start, end, sourceFile, ts.formatting.getFormatContext(toEditorSettings(options)));
+            return ts.formatting.formatSelection(start, end, sourceFile, ts.formatting.getFormatContext(toEditorSettings(options), host));
         }
         function getFormattingEditsForDocument(fileName, options) {
-            return ts.formatting.formatDocument(syntaxTreeCache.getCurrentSourceFile(fileName), ts.formatting.getFormatContext(toEditorSettings(options)));
+            return ts.formatting.formatDocument(syntaxTreeCache.getCurrentSourceFile(fileName), ts.formatting.getFormatContext(toEditorSettings(options), host));
         }
         function getFormattingEditsAfterKeystroke(fileName, position, key, options) {
             var sourceFile = syntaxTreeCache.getCurrentSourceFile(fileName);
-            var formatContext = ts.formatting.getFormatContext(toEditorSettings(options));
+            var formatContext = ts.formatting.getFormatContext(toEditorSettings(options), host);
             if (!ts.isInComment(sourceFile, position)) {
                 switch (key) {
                     case "{":
@@ -139682,7 +139723,7 @@ var ts;
             synchronizeHostData();
             var sourceFile = getValidSourceFile(fileName);
             var span = ts.createTextSpanFromBounds(start, end);
-            var formatContext = ts.formatting.getFormatContext(formatOptions);
+            var formatContext = ts.formatting.getFormatContext(formatOptions, host);
             return ts.flatMap(ts.deduplicate(errorCodes, ts.equateValues, ts.compareValues), function (errorCode) {
                 cancellationToken.throwIfCancellationRequested();
                 return ts.codefix.getFixes({ errorCode: errorCode, sourceFile: sourceFile, span: span, program: program, host: host, cancellationToken: cancellationToken, formatContext: formatContext, preferences: preferences });
@@ -139693,7 +139734,7 @@ var ts;
             synchronizeHostData();
             ts.Debug.assert(scope.type === "file");
             var sourceFile = getValidSourceFile(scope.fileName);
-            var formatContext = ts.formatting.getFormatContext(formatOptions);
+            var formatContext = ts.formatting.getFormatContext(formatOptions, host);
             return ts.codefix.getAllFixes({ fixId: fixId, sourceFile: sourceFile, program: program, host: host, cancellationToken: cancellationToken, formatContext: formatContext, preferences: preferences });
         }
         function organizeImports(scope, formatOptions, preferences) {
@@ -139701,12 +139742,12 @@ var ts;
             synchronizeHostData();
             ts.Debug.assert(scope.type === "file");
             var sourceFile = getValidSourceFile(scope.fileName);
-            var formatContext = ts.formatting.getFormatContext(formatOptions);
+            var formatContext = ts.formatting.getFormatContext(formatOptions, host);
             return ts.OrganizeImports.organizeImports(sourceFile, formatContext, host, program, preferences);
         }
         function getEditsForFileRename(oldFilePath, newFilePath, formatOptions, preferences) {
             if (preferences === void 0) { preferences = ts.emptyOptions; }
-            return ts.getEditsForFileRename(getProgram(), oldFilePath, newFilePath, host, ts.formatting.getFormatContext(formatOptions), preferences, sourceMapper);
+            return ts.getEditsForFileRename(getProgram(), oldFilePath, newFilePath, host, ts.formatting.getFormatContext(formatOptions, host), preferences, sourceMapper);
         }
         function applyCodeActionCommand(fileName, actionOrFormatSettingsOrUndefined) {
             var action = typeof fileName === "string" ? actionOrFormatSettingsOrUndefined : fileName;
@@ -139908,7 +139949,7 @@ var ts;
                 endPosition: endPosition,
                 program: getProgram(),
                 host: host,
-                formatContext: ts.formatting.getFormatContext(formatOptions),
+                formatContext: ts.formatting.getFormatContext(formatOptions, host),
                 cancellationToken: cancellationToken,
                 preferences: preferences,
             };
