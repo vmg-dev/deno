@@ -288,7 +288,7 @@ var ts;
     // If changing the text in this section, be sure to test `configurePrerelease` too.
     ts.versionMajorMinor = "4.0";
     /** The version of the TypeScript compiler release */
-    ts.version = "4.0.2";
+    ts.version = "4.0.3";
     /* @internal */
     var Comparison;
     (function (Comparison) {
@@ -6368,6 +6368,10 @@ var ts;
                 return ts.matchFiles(path, extensions, excludes, includes, useCaseSensitiveFileNames, process.cwd(), depth, getAccessibleFileSystemEntries, realpath);
             }
             function fileSystemEntryExists(path, entryKind) {
+                // Since the error thrown by fs.statSync isn't used, we can avoid collecting a stack trace to improve
+                // the CPU time performance.
+                var originalStackTraceLimit = Error.stackTraceLimit;
+                Error.stackTraceLimit = 0;
                 try {
                     var stat = _fs.statSync(path);
                     switch (entryKind) {
@@ -6378,6 +6382,9 @@ var ts;
                 }
                 catch (e) {
                     return false;
+                }
+                finally {
+                    Error.stackTraceLimit = originalStackTraceLimit;
                 }
             }
             function fileExists(path) {
@@ -70736,13 +70743,10 @@ var ts;
         function checkTupleType(node) {
             var elementTypes = node.elements;
             var seenOptionalElement = false;
-            var seenNamedElement = false;
+            var hasNamedElement = ts.some(elementTypes, ts.isNamedTupleMember);
             for (var i = 0; i < elementTypes.length; i++) {
                 var e = elementTypes[i];
-                if (e.kind === 191 /* NamedTupleMember */) {
-                    seenNamedElement = true;
-                }
-                else if (seenNamedElement) {
+                if (e.kind !== 191 /* NamedTupleMember */ && hasNamedElement) {
                     grammarErrorOnNode(e, ts.Diagnostics.Tuple_members_must_all_have_names_or_all_not_have_names);
                     break;
                 }
@@ -112965,7 +112969,10 @@ var ts;
                 var newImport = sortedNewImports_1[_i];
                 var insertionIndex = ts.OrganizeImports.getImportDeclarationInsertionIndex(existingImportStatements, newImport);
                 if (insertionIndex === 0) {
-                    changes.insertNodeBefore(sourceFile, existingImportStatements[0], newImport, /*blankLineBetween*/ false);
+                    // If the first import is top-of-file, insert after the leading comment which is likely the header.
+                    var options = existingImportStatements[0] === sourceFile.statements[0] ?
+                        { leadingTriviaOption: ts.textChanges.LeadingTriviaOption.Exclude } : {};
+                    changes.insertNodeBefore(sourceFile, existingImportStatements[0], newImport, /*blankLineBetween*/ false, options);
                 }
                 else {
                     var prevImport = existingImportStatements[insertionIndex - 1];
@@ -130093,9 +130100,10 @@ var ts;
                     this.insertNodeAt(sourceFile, parameters.pos, newParam);
                 }
             };
-            ChangeTracker.prototype.insertNodeBefore = function (sourceFile, before, newNode, blankLineBetween) {
+            ChangeTracker.prototype.insertNodeBefore = function (sourceFile, before, newNode, blankLineBetween, options) {
                 if (blankLineBetween === void 0) { blankLineBetween = false; }
-                this.insertNodeAt(sourceFile, getAdjustedStartPosition(sourceFile, before, {}), newNode, this.getOptionsForInsertNodeBefore(before, newNode, blankLineBetween));
+                if (options === void 0) { options = {}; }
+                this.insertNodeAt(sourceFile, getAdjustedStartPosition(sourceFile, before, options), newNode, this.getOptionsForInsertNodeBefore(before, newNode, blankLineBetween));
             };
             ChangeTracker.prototype.insertModifierBefore = function (sourceFile, modifier, before) {
                 var pos = before.getStart(sourceFile);
@@ -133963,7 +133971,7 @@ var ts;
                 else if (existingSpecifiers === null || existingSpecifiers === void 0 ? void 0 : existingSpecifiers.length) {
                     for (var _b = 0, newSpecifiers_2 = newSpecifiers; _b < newSpecifiers_2.length; _b++) {
                         var spec = newSpecifiers_2[_b];
-                        changes.insertNodeAtEndOfList(sourceFile, existingSpecifiers, spec);
+                        changes.insertNodeInListAfter(sourceFile, ts.last(existingSpecifiers), spec, existingSpecifiers);
                     }
                 }
                 else {
