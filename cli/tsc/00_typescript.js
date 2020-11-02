@@ -288,7 +288,7 @@ var ts;
     // If changing the text in this section, be sure to test `configurePrerelease` too.
     ts.versionMajorMinor = "4.0";
     /** The version of the TypeScript compiler release */
-    ts.version = "4.0.3";
+    ts.version = "4.0.5";
     /* @internal */
     var Comparison;
     (function (Comparison) {
@@ -89612,6 +89612,8 @@ var ts;
             switch (node.kind) {
                 case 213 /* BinaryExpression */:
                     return visitBinaryExpression(node);
+                case 332 /* CommaListExpression */:
+                    return visitCommaListExpression(node);
                 case 214 /* ConditionalExpression */:
                     return visitConditionalExpression(node);
                 case 216 /* YieldExpression */:
@@ -89907,6 +89909,61 @@ var ts;
             return ts.visitEachChild(node, visitor, context);
         }
         /**
+         * Visits a comma expression containing `yield`.
+         *
+         * @param node The node to visit.
+         */
+        function visitCommaExpression(node) {
+            // [source]
+            //      x = a(), yield, b();
+            //
+            // [intermediate]
+            //      a();
+            //  .yield resumeLabel
+            //  .mark resumeLabel
+            //      x = %sent%, b();
+            var pendingExpressions = [];
+            visit(node.left);
+            visit(node.right);
+            return factory.inlineExpressions(pendingExpressions);
+            function visit(node) {
+                if (ts.isBinaryExpression(node) && node.operatorToken.kind === 27 /* CommaToken */) {
+                    visit(node.left);
+                    visit(node.right);
+                }
+                else {
+                    if (containsYield(node) && pendingExpressions.length > 0) {
+                        emitWorker(1 /* Statement */, [factory.createExpressionStatement(factory.inlineExpressions(pendingExpressions))]);
+                        pendingExpressions = [];
+                    }
+                    pendingExpressions.push(ts.visitNode(node, visitor, ts.isExpression));
+                }
+            }
+        }
+        /**
+         * Visits a comma-list expression.
+         *
+         * @param node The node to visit.
+         */
+        function visitCommaListExpression(node) {
+            // flattened version of `visitCommaExpression`
+            var pendingExpressions = [];
+            for (var _i = 0, _a = node.elements; _i < _a.length; _i++) {
+                var elem = _a[_i];
+                if (ts.isBinaryExpression(elem) && elem.operatorToken.kind === 27 /* CommaToken */) {
+                    pendingExpressions.push(visitCommaExpression(elem));
+                }
+                else {
+                    if (containsYield(elem) && pendingExpressions.length > 0) {
+                        emitWorker(1 /* Statement */, [factory.createExpressionStatement(factory.inlineExpressions(pendingExpressions))]);
+                        pendingExpressions = [];
+                    }
+                    pendingExpressions.push(ts.visitNode(elem, visitor, ts.isExpression));
+                }
+            }
+            return factory.inlineExpressions(pendingExpressions);
+        }
+        /**
          * Visits a logical binary expression containing `yield`.
          *
          * @param node A node to visit.
@@ -89954,38 +90011,6 @@ var ts;
             emitAssignment(resultLocal, ts.visitNode(node.right, visitor, ts.isExpression), /*location*/ node.right);
             markLabel(resultLabel);
             return resultLocal;
-        }
-        /**
-         * Visits a comma expression containing `yield`.
-         *
-         * @param node The node to visit.
-         */
-        function visitCommaExpression(node) {
-            // [source]
-            //      x = a(), yield, b();
-            //
-            // [intermediate]
-            //      a();
-            //  .yield resumeLabel
-            //  .mark resumeLabel
-            //      x = %sent%, b();
-            var pendingExpressions = [];
-            visit(node.left);
-            visit(node.right);
-            return factory.inlineExpressions(pendingExpressions);
-            function visit(node) {
-                if (ts.isBinaryExpression(node) && node.operatorToken.kind === 27 /* CommaToken */) {
-                    visit(node.left);
-                    visit(node.right);
-                }
-                else {
-                    if (containsYield(node) && pendingExpressions.length > 0) {
-                        emitWorker(1 /* Statement */, [factory.createExpressionStatement(factory.inlineExpressions(pendingExpressions))]);
-                        pendingExpressions = [];
-                    }
-                    pendingExpressions.push(ts.visitNode(node, visitor, ts.isExpression));
-                }
-            }
         }
         /**
          * Visits a conditional expression containing `yield`.
@@ -103048,6 +103073,7 @@ var ts;
             getOptionsDiagnostics: getOptionsDiagnostics,
             getGlobalDiagnostics: getGlobalDiagnostics,
             getSemanticDiagnostics: getSemanticDiagnostics,
+            getCachedSemanticDiagnostics: getCachedSemanticDiagnostics,
             getSuggestionDiagnostics: getSuggestionDiagnostics,
             getDeclarationDiagnostics: getDeclarationDiagnostics,
             getBindAndCheckDiagnostics: getBindAndCheckDiagnostics,
@@ -103670,6 +103696,11 @@ var ts;
         }
         function getSemanticDiagnostics(sourceFile, cancellationToken) {
             return getDiagnosticsHelper(sourceFile, getSemanticDiagnosticsForFile, cancellationToken);
+        }
+        function getCachedSemanticDiagnostics(sourceFile) {
+            var _a;
+            return sourceFile
+                ? (_a = cachedBindAndCheckDiagnosticsForFile.perFile) === null || _a === void 0 ? void 0 : _a.get(sourceFile.path) : cachedBindAndCheckDiagnosticsForFile.allDiagnostics;
         }
         function getBindAndCheckDiagnostics(sourceFile, cancellationToken) {
             return getBindAndCheckDiagnosticsForFile(sourceFile, cancellationToken);
@@ -106703,31 +106734,54 @@ var ts;
          * in that order would be used to write the files
          */
         function emit(targetSourceFile, writeFile, cancellationToken, emitOnlyDtsFiles, customTransformers) {
+            var restorePendingEmitOnHandlingNoEmitSuccess = false;
+            var savedAffectedFilesPendingEmit;
+            var savedAffectedFilesPendingEmitKind;
+            var savedAffectedFilesPendingEmitIndex;
+            // Backup and restore affected pendings emit state for non emit Builder if noEmitOnError is enabled and emitBuildInfo could be written in case there are errors
+            // This ensures pending files to emit is updated in tsbuildinfo
+            // Note that when there are no errors, emit proceeds as if everything is emitted as it is callers reponsibility to write the files to disk if at all (because its builder that doesnt track files to emit)
+            if (kind !== BuilderProgramKind.EmitAndSemanticDiagnosticsBuilderProgram &&
+                !targetSourceFile &&
+                !ts.outFile(state.compilerOptions) &&
+                !state.compilerOptions.noEmit &&
+                state.compilerOptions.noEmitOnError) {
+                restorePendingEmitOnHandlingNoEmitSuccess = true;
+                savedAffectedFilesPendingEmit = state.affectedFilesPendingEmit && state.affectedFilesPendingEmit.slice();
+                savedAffectedFilesPendingEmitKind = state.affectedFilesPendingEmitKind && new ts.Map(state.affectedFilesPendingEmitKind);
+                savedAffectedFilesPendingEmitIndex = state.affectedFilesPendingEmitIndex;
+            }
             if (kind === BuilderProgramKind.EmitAndSemanticDiagnosticsBuilderProgram) {
                 assertSourceFileOkWithoutNextAffectedCall(state, targetSourceFile);
-                var result = ts.handleNoEmitOptions(builderProgram, targetSourceFile, writeFile, cancellationToken);
-                if (result)
-                    return result;
-                if (!targetSourceFile) {
-                    // Emit and report any errors we ran into.
-                    var sourceMaps = [];
-                    var emitSkipped = false;
-                    var diagnostics = void 0;
-                    var emittedFiles = [];
-                    var affectedEmitResult = void 0;
-                    while (affectedEmitResult = emitNextAffectedFile(writeFile, cancellationToken, emitOnlyDtsFiles, customTransformers)) {
-                        emitSkipped = emitSkipped || affectedEmitResult.result.emitSkipped;
-                        diagnostics = ts.addRange(diagnostics, affectedEmitResult.result.diagnostics);
-                        emittedFiles = ts.addRange(emittedFiles, affectedEmitResult.result.emittedFiles);
-                        sourceMaps = ts.addRange(sourceMaps, affectedEmitResult.result.sourceMaps);
-                    }
-                    return {
-                        emitSkipped: emitSkipped,
-                        diagnostics: diagnostics || ts.emptyArray,
-                        emittedFiles: emittedFiles,
-                        sourceMaps: sourceMaps
-                    };
+            }
+            var result = ts.handleNoEmitOptions(builderProgram, targetSourceFile, writeFile, cancellationToken);
+            if (result)
+                return result;
+            if (restorePendingEmitOnHandlingNoEmitSuccess) {
+                state.affectedFilesPendingEmit = savedAffectedFilesPendingEmit;
+                state.affectedFilesPendingEmitKind = savedAffectedFilesPendingEmitKind;
+                state.affectedFilesPendingEmitIndex = savedAffectedFilesPendingEmitIndex;
+            }
+            // Emit only affected files if using builder for emit
+            if (!targetSourceFile && kind === BuilderProgramKind.EmitAndSemanticDiagnosticsBuilderProgram) {
+                // Emit and report any errors we ran into.
+                var sourceMaps = [];
+                var emitSkipped = false;
+                var diagnostics = void 0;
+                var emittedFiles = [];
+                var affectedEmitResult = void 0;
+                while (affectedEmitResult = emitNextAffectedFile(writeFile, cancellationToken, emitOnlyDtsFiles, customTransformers)) {
+                    emitSkipped = emitSkipped || affectedEmitResult.result.emitSkipped;
+                    diagnostics = ts.addRange(diagnostics, affectedEmitResult.result.diagnostics);
+                    emittedFiles = ts.addRange(emittedFiles, affectedEmitResult.result.emittedFiles);
+                    sourceMaps = ts.addRange(sourceMaps, affectedEmitResult.result.sourceMaps);
                 }
+                return {
+                    emitSkipped: emitSkipped,
+                    diagnostics: diagnostics || ts.emptyArray,
+                    emittedFiles: emittedFiles,
+                    sourceMaps: sourceMaps
+                };
             }
             return ts.Debug.checkDefined(state.program).emit(targetSourceFile, writeFile || ts.maybeBind(host, host.writeFile), cancellationToken, emitOnlyDtsFiles, customTransformers);
         }
@@ -106747,7 +106801,8 @@ var ts;
                     return toAffectedFileResult(state, state.program.getSemanticDiagnostics(/*targetSourceFile*/ undefined, cancellationToken), affected);
                 }
                 // Add file to affected file pending emit to handle for later emit time
-                if (kind === BuilderProgramKind.EmitAndSemanticDiagnosticsBuilderProgram) {
+                // Apart for emit builder do this for tsbuildinfo, do this for non emit builder when noEmit is set as tsbuildinfo is written and reused between emitters
+                if (kind === BuilderProgramKind.EmitAndSemanticDiagnosticsBuilderProgram || state.compilerOptions.noEmit || state.compilerOptions.noEmitOnError) {
                     addToAffectedFilesPendingEmit(state, affected.resolvedPath, 1 /* Full */);
                 }
                 // Get diagnostics for the affected file if its not ignored
