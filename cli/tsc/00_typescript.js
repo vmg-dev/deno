@@ -288,7 +288,7 @@ var ts;
     // If changing the text in this section, be sure to test `configurePrerelease` too.
     ts.versionMajorMinor = "4.1";
     /** The version of the TypeScript compiler release */
-    ts.version = "4.1.2";
+    ts.version = "4.1.3";
     /* @internal */
     var Comparison;
     (function (Comparison) {
@@ -45888,7 +45888,7 @@ var ts;
             var resolved = getExternalModuleMember(root, commonJSPropertyAccess || node, dontResolveAlias);
             var name = node.propertyName || node.name;
             if (commonJSPropertyAccess && resolved && ts.isIdentifier(name)) {
-                return getPropertyOfType(getTypeOfSymbol(resolved), name.escapedText);
+                return resolveSymbol(getPropertyOfType(getTypeOfSymbol(resolved), name.escapedText), dontResolveAlias);
             }
             markSymbolOfAliasDeclarationIfTypeOnly(node, /*immediateTarget*/ undefined, resolved, /*overwriteEmpty*/ false);
             return resolved;
@@ -63317,6 +63317,7 @@ var ts;
                     return errorType;
                 }
                 flowDepth++;
+                var sharedFlow;
                 while (true) {
                     var flags = flow.flags;
                     if (flags & 4096 /* Shared */) {
@@ -63329,6 +63330,7 @@ var ts;
                                 return sharedFlowTypes[i];
                             }
                         }
+                        sharedFlow = flow;
                     }
                     var type = void 0;
                     if (flags & 16 /* Assignment */) {
@@ -63392,9 +63394,9 @@ var ts;
                         // simply return the non-auto declared type to reduce follow-on errors.
                         type = convertAutoToAny(declaredType);
                     }
-                    if (flags & 4096 /* Shared */) {
+                    if (sharedFlow) {
                         // Record visited node and the associated type in the cache.
-                        sharedFlowNodes[sharedFlowCount] = flow;
+                        sharedFlowNodes[sharedFlowCount] = sharedFlow;
                         sharedFlowTypes[sharedFlowCount] = type;
                         sharedFlowCount++;
                     }
@@ -68561,9 +68563,9 @@ var ts;
                 var oldCandidatesForArgumentError = candidatesForArgumentError;
                 var oldCandidateForArgumentArityError = candidateForArgumentArityError;
                 var oldCandidateForTypeArgumentError = candidateForTypeArgumentError;
-                var declCount = ts.length((_a = failed.declaration) === null || _a === void 0 ? void 0 : _a.symbol.declarations);
-                var isOverload = declCount > 1;
-                var implDecl = isOverload ? ts.find(((_b = failed.declaration) === null || _b === void 0 ? void 0 : _b.symbol.declarations) || ts.emptyArray, function (d) { return ts.isFunctionLikeDeclaration(d) && ts.nodeIsPresent(d.body); }) : undefined;
+                var failedSignatureDeclarations = ((_b = (_a = failed.declaration) === null || _a === void 0 ? void 0 : _a.symbol) === null || _b === void 0 ? void 0 : _b.declarations) || ts.emptyArray;
+                var isOverload = failedSignatureDeclarations.length > 1;
+                var implDecl = isOverload ? ts.find(failedSignatureDeclarations, function (d) { return ts.isFunctionLikeDeclaration(d) && ts.nodeIsPresent(d.body); }) : undefined;
                 if (implDecl) {
                     var candidate = getSignatureFromDeclaration(implDecl);
                     var isSingleNonGenericCandidate_1 = !candidate.typeParameters;
