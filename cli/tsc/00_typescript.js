@@ -288,7 +288,7 @@ var ts;
     // If changing the text in this section, be sure to test `configurePrerelease` too.
     ts.versionMajorMinor = "4.1";
     /** The version of the TypeScript compiler release */
-    ts.version = "4.1.3";
+    ts.version = "4.1.4";
     /* @internal */
     var Comparison;
     (function (Comparison) {
