@@ -36112,6 +36112,7 @@ var ts;
         ["es2020", "lib.es2020.d.ts"],
         ["esnext", "lib.esnext.d.ts"],
         // Host only
+        ["dom.asynciterable", "lib.dom.asynciterable.d.ts"],
         ["dom", "lib.dom.d.ts"],
         ["dom.iterable", "lib.dom.iterable.d.ts"],
         ["webworker", "lib.webworker.d.ts"],
