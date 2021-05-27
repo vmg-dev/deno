@@ -18,22 +18,18 @@ and limitations under the License.
 /// <reference no-default-lib="true"/>
 
 
-/// <reference lib="es2015.iterable" />
-/// <reference lib="es2015.symbol" />
-
-interface SymbolConstructor {
+interface String {
     /**
-     * A regular expression method that matches the regular expression against a string. Called
-     * by the String.prototype.matchAll method.
+     * Replace all instances of a substring in a string, using a regular expression or search string.
+     * @param searchValue A string to search for.
+     * @param replaceValue A string containing the text to replace for every successful match of searchValue in this string.
      */
-    readonly matchAll: unique symbol;
-}
+    replaceAll(searchValue: string | RegExp, replaceValue: string): string;
 
-interface RegExp {
     /**
-     * Matches a string with this regular expression, and returns an iterable of matches
-     * containing the results of that search.
-     * @param string A string to search within.
+     * Replace all instances of a substring in a string, using a regular expression or search string.
+     * @param searchValue A string to search for.
+     * @param replacer A function that returns the replacement text.
      */
-    [Symbol.matchAll](str: string): IterableIterator<RegExpMatchArray>;
+    replaceAll(searchValue: string | RegExp, replacer: (substring: string, ...args: any[]) => string): string;
 }
