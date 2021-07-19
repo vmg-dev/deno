@@ -290,7 +290,7 @@ var ts;
     // The following is baselined as a literal template type without intervention
     /** The version of the TypeScript compiler release */
     // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-    ts.version = "4.3.2";
+    ts.version = "4.3.5";
     /* @internal */
     var Comparison;
     (function (Comparison) {
@@ -17515,56 +17515,43 @@ var ts;
         }
         return __assign(__assign({}, writer), { writeTrailingSemicolon: function () {
                 pendingTrailingSemicolon = true;
-            },
-            writeLiteral: function (s) {
+            }, writeLiteral: function (s) {
                 commitPendingTrailingSemicolon();
                 writer.writeLiteral(s);
-            },
-            writeStringLiteral: function (s) {
+            }, writeStringLiteral: function (s) {
                 commitPendingTrailingSemicolon();
                 writer.writeStringLiteral(s);
-            },
-            writeSymbol: function (s, sym) {
+            }, writeSymbol: function (s, sym) {
                 commitPendingTrailingSemicolon();
                 writer.writeSymbol(s, sym);
-            },
-            writePunctuation: function (s) {
+            }, writePunctuation: function (s) {
                 commitPendingTrailingSemicolon();
                 writer.writePunctuation(s);
-            },
-            writeKeyword: function (s) {
+            }, writeKeyword: function (s) {
                 commitPendingTrailingSemicolon();
                 writer.writeKeyword(s);
-            },
-            writeOperator: function (s) {
+            }, writeOperator: function (s) {
                 commitPendingTrailingSemicolon();
                 writer.writeOperator(s);
-            },
-            writeParameter: function (s) {
+            }, writeParameter: function (s) {
                 commitPendingTrailingSemicolon();
                 writer.writeParameter(s);
-            },
-            writeSpace: function (s) {
+            }, writeSpace: function (s) {
                 commitPendingTrailingSemicolon();
                 writer.writeSpace(s);
-            },
-            writeProperty: function (s) {
+            }, writeProperty: function (s) {
                 commitPendingTrailingSemicolon();
                 writer.writeProperty(s);
-            },
-            writeComment: function (s) {
+            }, writeComment: function (s) {
                 commitPendingTrailingSemicolon();
                 writer.writeComment(s);
-            },
-            writeLine: function () {
+            }, writeLine: function () {
                 commitPendingTrailingSemicolon();
                 writer.writeLine();
-            },
-            increaseIndent: function () {
+            }, increaseIndent: function () {
                 commitPendingTrailingSemicolon();
                 writer.increaseIndent();
-            },
-            decreaseIndent: function () {
+            }, decreaseIndent: function () {
                 commitPendingTrailingSemicolon();
                 writer.decreaseIndent();
             } });
@@ -29462,8 +29449,8 @@ var ts;
                             visitNode(cbNode, node.typeExpression) ||
                             (typeof node.comment === "string" ? undefined : visitNodes(cbNode, cbNodes, node.comment))
                         : visitNode(cbNode, node.typeExpression) ||
-                            visitNode(cbNode, node.name)) ||
-                    (typeof node.comment === "string" ? undefined : visitNodes(cbNode, cbNodes, node.comment));
+                            visitNode(cbNode, node.name) ||
+                            (typeof node.comment === "string" ? undefined : visitNodes(cbNode, cbNodes, node.comment)));
             case 320 /* JSDocAuthorTag */:
                 return visitNode(cbNode, node.tagName) ||
                     (typeof node.comment === "string" ? undefined : visitNodes(cbNode, cbNodes, node.comment));
@@ -37093,12 +37080,12 @@ var ts;
         ["es2021.promise", "lib.es2021.promise.d.ts"],
         ["es2021.string", "lib.es2021.string.d.ts"],
         ["es2021.weakref", "lib.es2021.weakref.d.ts"],
-        ["esnext.array", "lib.es2019.array.d.ts"],
+        ["esnext.array", "lib.esnext.array.d.ts"],
         ["esnext.symbol", "lib.es2019.symbol.d.ts"],
         ["esnext.asynciterable", "lib.es2018.asynciterable.d.ts"],
         ["esnext.intl", "lib.esnext.intl.d.ts"],
         ["esnext.bigint", "lib.es2020.bigint.d.ts"],
-        ["esnext.string", "lib.es2021.string.d.ts"],
+        ["esnext.string", "lib.esnext.string.d.ts"],
         ["esnext.promise", "lib.es2021.promise.d.ts"],
         ["esnext.weakref", "lib.es2021.weakref.d.ts"]
     ];
@@ -37577,6 +37564,8 @@ var ts;
         {
             name: "strict",
             type: "boolean",
+            // Though this affects semantic diagnostics, affectsSemanticDiagnostics is not set here
+            // The value of each strictFlag depends on own strictFlag value or this and never accessed directly.
             showInSimplifiedHelpView: true,
             category: ts.Diagnostics.Strict_Type_Checking_Options,
             description: ts.Diagnostics.Enable_all_strict_type_checking_options
@@ -40498,9 +40487,7 @@ var ts;
         var preDirectoryResolutionCache = createPerDirectoryResolutionCache(currentDirectory, getCanonicalFileName, directoryToModuleNameMap || (directoryToModuleNameMap = createCacheWithRedirects(options)));
         moduleNameToDirectoryMap || (moduleNameToDirectoryMap = createCacheWithRedirects(options));
         var packageJsonInfoCache = createPackageJsonInfoCache(currentDirectory, getCanonicalFileName);
-        return __assign(__assign(__assign({}, packageJsonInfoCache), preDirectoryResolutionCache), { getOrCreateCacheForModuleName: getOrCreateCacheForModuleName,
-            clear: clear,
-            update: update, getPackageJsonInfoCache: function () { return packageJsonInfoCache; } });
+        return __assign(__assign(__assign({}, packageJsonInfoCache), preDirectoryResolutionCache), { getOrCreateCacheForModuleName: getOrCreateCacheForModuleName, clear: clear, update: update, getPackageJsonInfoCache: function () { return packageJsonInfoCache; } });
         function clear() {
             preDirectoryResolutionCache.clear();
             moduleNameToDirectoryMap.clear();
@@ -59363,8 +59350,7 @@ var ts;
             return type;
         }
         function maybeTypeParameterReference(node) {
-            return !(node.kind === 158 /* QualifiedName */ ||
-                node.parent.kind === 174 /* TypeReference */ && node.parent.typeArguments && node === node.parent.typeName ||
+            return !(node.parent.kind === 174 /* TypeReference */ && node.parent.typeArguments && node === node.parent.typeName ||
                 node.parent.kind === 196 /* ImportType */ && node.parent.typeArguments && node === node.parent.qualifier);
         }
         function isTypeParameterPossiblyReferenced(tp, node) {
@@ -59392,7 +59378,10 @@ var ts;
                         return true;
                     case 166 /* MethodDeclaration */:
                     case 165 /* MethodSignature */:
-                        return (!node.type && !!node.body) || !!ts.forEachChild(node, containsReference);
+                        return !node.type && !!node.body ||
+                            ts.some(node.typeParameters, containsReference) ||
+                            ts.some(node.parameters, containsReference) ||
+                            !!node.type && containsReference(node.type);
                 }
                 return !!ts.forEachChild(node, containsReference);
             }
@@ -64775,12 +64764,14 @@ var ts;
                 applyToReturnTypes(source, target, inferFromTypes);
             }
             function inferFromIndexTypes(source, target) {
+                // Inferences across mapped type index signatures are pretty much the same a inferences to homomorphic variables
+                var priority = (ts.getObjectFlags(source) & ts.getObjectFlags(target) & 32 /* Mapped */) ? 8 /* HomomorphicMappedType */ : 0;
                 var targetStringIndexType = getIndexTypeOfType(target, 0 /* String */);
                 if (targetStringIndexType) {
                     var sourceIndexType = getIndexTypeOfType(source, 0 /* String */) ||
                         getImplicitIndexTypeOfType(source, 0 /* String */);
                     if (sourceIndexType) {
-                        inferFromTypes(sourceIndexType, targetStringIndexType);
+                        inferWithPriority(sourceIndexType, targetStringIndexType, priority);
                     }
                 }
                 var targetNumberIndexType = getIndexTypeOfType(target, 1 /* Number */);
@@ -64789,7 +64780,7 @@ var ts;
                         getIndexTypeOfType(source, 0 /* String */) ||
                         getImplicitIndexTypeOfType(source, 1 /* Number */);
                     if (sourceIndexType) {
-                        inferFromTypes(sourceIndexType, targetNumberIndexType);
+                        inferWithPriority(sourceIndexType, targetNumberIndexType, priority);
                     }
                 }
             }
@@ -86105,6 +86096,7 @@ var ts;
                 case 120 /* PrivateKeyword */:
                 case 121 /* ProtectedKeyword */:
                 case 125 /* AbstractKeyword */:
+                case 156 /* OverrideKeyword */:
                 case 84 /* ConstKeyword */:
                 case 133 /* DeclareKeyword */:
                 case 142 /* ReadonlyKeyword */:
@@ -107297,11 +107289,21 @@ var ts;
                     // JsxText will be written with its leading whitespace, so don't add more manually.
                     return 0;
                 }
-                else if (preserveSourceNewlines && siblingNodePositionsAreComparable(previousNode, nextNode)) {
-                    return getEffectiveLines(function (includeComments) { return ts.getLinesBetweenRangeEndAndRangeStart(previousNode, nextNode, currentSourceFile, includeComments); });
-                }
-                else if (!preserveSourceNewlines && !ts.nodeIsSynthesized(previousNode) && !ts.nodeIsSynthesized(nextNode)) {
-                    return ts.rangeEndIsOnSameLineAsRangeStart(previousNode, nextNode, currentSourceFile) ? 0 : 1;
+                else if (!ts.nodeIsSynthesized(previousNode) && !ts.nodeIsSynthesized(nextNode)) {
+                    if (preserveSourceNewlines && siblingNodePositionsAreComparable(previousNode, nextNode)) {
+                        return getEffectiveLines(function (includeComments) { return ts.getLinesBetweenRangeEndAndRangeStart(previousNode, nextNode, currentSourceFile, includeComments); });
+                    }
+                    // If `preserveSourceNewlines` is `false` we do not intend to preserve the effective lines between the
+                    // previous and next node. Instead we naively check whether nodes are on separate lines within the
+                    // same node parent. If so, we intend to preserve a single line terminator. This is less precise and
+                    // expensive than checking with `preserveSourceNewlines` as above, but the goal is not to preserve the
+                    // effective source lines between two sibling nodes.
+                    else if (!preserveSourceNewlines && originalNodesHaveSameParent(previousNode, nextNode)) {
+                        return ts.rangeEndIsOnSameLineAsRangeStart(previousNode, nextNode, currentSourceFile) ? 0 : 1;
+                    }
+                    // If the two nodes are not comparable, add a line terminator based on the format that can indicate
+                    // whether new lines are preferred or not.
+                    return format & 65536 /* PreferNewLine */ ? 1 : 0;
                 }
                 else if (synthesizedNodeStartsOnNewLine(previousNode, format) || synthesizedNodeStartsOnNewLine(nextNode, format)) {
                     return 1;
@@ -107941,10 +107943,13 @@ var ts;
             }
             exitComment();
         }
+        function originalNodesHaveSameParent(nodeA, nodeB) {
+            nodeA = ts.getOriginalNode(nodeA);
+            // For performance, do not call `getOriginalNode` for `nodeB` if `nodeA` doesn't even
+            // have a parent node.
+            return nodeA.parent && nodeA.parent === ts.getOriginalNode(nodeB).parent;
+        }
         function siblingNodePositionsAreComparable(previousNode, nextNode) {
-            if (ts.nodeIsSynthesized(previousNode) || ts.nodeIsSynthesized(nextNode)) {
-                return false;
-            }
             if (nextNode.pos < previousNode.end) {
                 return false;
             }
@@ -113317,8 +113322,14 @@ var ts;
         var optionsNameMap = ts.getOptionsNameMap().optionsNameMap;
         for (var _i = 0, _a = ts.getOwnKeys(options).sort(ts.compareStringsCaseSensitive); _i < _a.length; _i++) {
             var name = _a[_i];
-            var optionInfo = optionsNameMap.get(name.toLowerCase());
-            if ((optionInfo === null || optionInfo === void 0 ? void 0 : optionInfo.affectsEmit) || (optionInfo === null || optionInfo === void 0 ? void 0 : optionInfo.affectsSemanticDiagnostics) || name === "skipLibCheck" || name === "skipDefaultLibCheck") {
+            var optionKey = name.toLowerCase();
+            var optionInfo = optionsNameMap.get(optionKey);
+            if ((optionInfo === null || optionInfo === void 0 ? void 0 : optionInfo.affectsEmit) || (optionInfo === null || optionInfo === void 0 ? void 0 : optionInfo.affectsSemanticDiagnostics) ||
+                // We need to store `strict`, even though it won't be examined directly, so that the
+                // flags it controls (e.g. `strictNullChecks`) will be retrieved correctly from the buildinfo
+                optionKey === "strict" ||
+                // We need to store these to determine whether `lib` files need to be rechecked.
+                optionKey === "skiplibcheck" || optionKey === "skipdefaultlibcheck") {
                 (result || (result = {}))[name] = convertToReusableCompilerOptionValue(optionInfo, options[name], relativeToBuildInfo);
             }
         }
@@ -116827,7 +116838,7 @@ var ts;
                 },
                 emit: function (targetSourceFile, writeFile, cancellationToken, emitOnlyDtsFiles, customTransformers) {
                     if (targetSourceFile || emitOnlyDtsFiles) {
-                        return withProgramOrUndefined(function (program) { return program.emit(targetSourceFile, writeFile, cancellationToken, emitOnlyDtsFiles, customTransformers); });
+                        return withProgramOrUndefined(function (program) { var _a, _b; return program.emit(targetSourceFile, writeFile, cancellationToken, emitOnlyDtsFiles, customTransformers || ((_b = (_a = state.host).getCustomTransformers) === null || _b === void 0 ? void 0 : _b.call(_a, project))); });
                     }
                     executeSteps(BuildStep.SemanticDiagnostics, cancellationToken);
                     if (step === BuildStep.EmitBuildInfo) {
@@ -116912,6 +116923,7 @@ var ts;
         }
         function emit(writeFileCallback, cancellationToken, customTransformers) {
             var _a;
+            var _b, _c;
             ts.Debug.assertIsDefined(program);
             ts.Debug.assert(step === BuildStep.Emit);
             // Before emitting lets backup state, so we can revert it back if there are declaration errors to handle emit and declaration errors correctly
@@ -116922,7 +116934,7 @@ var ts;
             var emitResult = ts.emitFilesAndReportErrors(program, reportDeclarationDiagnostics, 
             /*write*/ undefined, 
             /*reportSummary*/ undefined, function (name, text, writeByteOrderMark) { return outputFiles.push({ name: name, text: text, writeByteOrderMark: writeByteOrderMark }); }, cancellationToken, 
-            /*emitOnlyDts*/ false, customTransformers).emitResult;
+            /*emitOnlyDts*/ false, customTransformers || ((_c = (_b = state.host).getCustomTransformers) === null || _c === void 0 ? void 0 : _c.call(_b, project))).emitResult;
             // Don't emit .d.ts if there are decl file errors
             if (declDiagnostics) {
                 program.restoreState();
@@ -117004,6 +117016,7 @@ var ts;
             return emitDiagnostics;
         }
         function emitBundle(writeFileCallback, customTransformers) {
+            var _a, _b;
             ts.Debug.assert(kind === InvalidatedProjectKind.UpdateBundle);
             if (state.options.dry) {
                 reportStatus(state, ts.Diagnostics.A_non_dry_build_would_update_output_of_project_0, project);
@@ -117019,7 +117032,7 @@ var ts;
             var outputFiles = ts.emitUsingBuildInfo(config, compilerHost, function (ref) {
                 var refName = resolveProjectName(state, ref.path);
                 return parseConfigFile(state, refName, toResolvedConfigFilePath(state, refName));
-            }, customTransformers);
+            }, customTransformers || ((_b = (_a = state.host).getCustomTransformers) === null || _b === void 0 ? void 0 : _b.call(_a, project)));
             if (ts.isString(outputFiles)) {
                 reportStatus(state, ts.Diagnostics.Cannot_update_output_of_project_0_because_there_was_error_reading_file_1, project, relName(state, outputFiles));
                 step = BuildStep.BuildInvalidatedProjectOfBundle;
@@ -121287,9 +121300,7 @@ var ts;
             [8 /* OptionalDependencies */, info.optionalDependencies],
             [4 /* PeerDependencies */, info.peerDependencies],
         ];
-        return __assign(__assign({}, info), { parseable: !!content, fileName: fileName,
-            get: get,
-            has: function (dependencyName, inGroups) {
+        return __assign(__assign({}, info), { parseable: !!content, fileName: fileName, get: get, has: function (dependencyName, inGroups) {
                 return !!get(dependencyName, inGroups);
             } });
         function get(dependencyName, inGroups) {
@@ -124556,10 +124567,9 @@ var ts;
                 getTypeScriptMemberSymbols();
             }
             else if (isRightOfOpenTag) {
-                var tagSymbols = typeChecker.getJsxIntrinsicTagNamesAt(location);
-                ts.Debug.assertEachIsDefined(tagSymbols, "getJsxIntrinsicTagNames() should all be defined");
+                symbols = typeChecker.getJsxIntrinsicTagNamesAt(location);
+                ts.Debug.assertEachIsDefined(symbols, "getJsxIntrinsicTagNames() should all be defined");
                 tryGetGlobalSymbols();
-                symbols = tagSymbols.concat(symbols);
                 completionKind = 1 /* Global */;
                 keywordFilters = 0 /* None */;
             }
@@ -124824,7 +124834,7 @@ var ts;
                 if (!attrsType)
                     return 0 /* Continue */;
                 var completionsType = jsxContainer && typeChecker.getContextualType(jsxContainer.attributes, 4 /* Completions */);
-                symbols = filterJsxAttributes(getPropertiesForObjectExpression(attrsType, completionsType, jsxContainer.attributes, typeChecker), jsxContainer.attributes.properties);
+                symbols = ts.concatenate(symbols, filterJsxAttributes(getPropertiesForObjectExpression(attrsType, completionsType, jsxContainer.attributes, typeChecker), jsxContainer.attributes.properties));
                 setSortTextToOptionalMember();
                 completionKind = 3 /* MemberLike */;
                 isNewIdentifierLocation = false;
@@ -124875,7 +124885,7 @@ var ts;
                 var scopeNode = getScopeNode(contextToken, adjustedPosition, sourceFile) || sourceFile;
                 isInSnippetScope = isSnippetScope(scopeNode);
                 var symbolMeanings = (isTypeOnly ? 0 /* None */ : 111551 /* Value */) | 788968 /* Type */ | 1920 /* Namespace */ | 2097152 /* Alias */;
-                symbols = typeChecker.getSymbolsInScope(scopeNode, symbolMeanings);
+                symbols = ts.concatenate(symbols, typeChecker.getSymbolsInScope(scopeNode, symbolMeanings));
                 ts.Debug.assertEachIsDefined(symbols, "getSymbolsInScope() should all be defined");
                 for (var _i = 0, symbols_1 = symbols; _i < symbols_1.length; _i++) {
                     var symbol = symbols_1[_i];
@@ -125175,7 +125185,7 @@ var ts;
                 var existingMembers = getPropertiesForCompletion(containerActualType, typeChecker);
                 var existingMemberEscapedNames = new ts.Set();
                 existingMembers.forEach(function (s) { return existingMemberEscapedNames.add(s.escapedName); });
-                symbols = ts.filter(members, function (s) { return !existingMemberEscapedNames.has(s.escapedName); });
+                symbols = ts.concatenate(symbols, ts.filter(members, function (s) { return !existingMemberEscapedNames.has(s.escapedName); }));
                 completionKind = 0 /* ObjectPropertyDeclaration */;
                 isNewIdentifierLocation = true;
                 return 1 /* Success */;
@@ -125257,7 +125267,7 @@ var ts;
                 }
                 if (typeMembers && typeMembers.length > 0) {
                     // Add filtered items to the completion list
-                    symbols = filterObjectMembersList(typeMembers, ts.Debug.checkDefined(existingMembers));
+                    symbols = ts.concatenate(symbols, filterObjectMembersList(typeMembers, ts.Debug.checkDefined(existingMembers)));
                 }
                 setSortTextToOptionalMember();
                 return 1 /* Success */;
@@ -125292,7 +125302,7 @@ var ts;
                 isNewIdentifierLocation = false;
                 var exports = typeChecker.getExportsAndPropertiesOfModule(moduleSpecifierSymbol);
                 var existing = new ts.Set(namedImportsOrExports.elements.filter(function (n) { return !isCurrentlyEditingNode(n); }).map(function (n) { return (n.propertyName || n.name).escapedText; }));
-                symbols = exports.filter(function (e) { return e.escapedName !== "default" /* Default */ && !existing.has(e.escapedName); });
+                symbols = ts.concatenate(symbols, exports.filter(function (e) { return e.escapedName !== "default" /* Default */ && !existing.has(e.escapedName); }));
                 return 1 /* Success */;
             }
             /**
@@ -125367,7 +125377,7 @@ var ts;
                             (type === null || type === void 0 ? void 0 : type.symbol) && typeChecker.getPropertiesOfType(typeChecker.getTypeOfSymbolAtLocation(type.symbol, decl)) :
                             type && typeChecker.getPropertiesOfType(type);
                     });
-                    symbols = filterClassMembersList(baseSymbols, decl.members, classElementModifierFlags);
+                    symbols = ts.concatenate(symbols, filterClassMembersList(baseSymbols, decl.members, classElementModifierFlags));
                 }
                 return 1 /* Success */;
             }
@@ -127715,9 +127725,7 @@ var ts;
                         var name_1 = displayParts_1.map(function (p) { return p.text; }).join("");
                         var declaration = symbol.declarations && ts.firstOrUndefined(symbol.declarations);
                         var node = declaration ? (ts.getNameOfDeclaration(declaration) || declaration) : originalNode;
-                        return __assign(__assign({}, getFileAndTextSpanFromNode(node)), { name: name_1,
-                            kind: kind_1,
-                            displayParts: displayParts_1, context: getContextNode(declaration) });
+                        return __assign(__assign({}, getFileAndTextSpanFromNode(node)), { name: name_1, kind: kind_1, displayParts: displayParts_1, context: getContextNode(declaration) });
                     }
                     case 1 /* Label */: {
                         var node = def.node;
@@ -127752,10 +127760,7 @@ var ts;
                 }
             })();
             var sourceFile = info.sourceFile, textSpan = info.textSpan, name = info.name, kind = info.kind, displayParts = info.displayParts, context = info.context;
-            return __assign({ containerKind: "" /* unknown */, containerName: "", fileName: sourceFile.fileName, kind: kind,
-                name: name,
-                textSpan: textSpan,
-                displayParts: displayParts }, toContextSpan(textSpan, sourceFile, context));
+            return __assign({ containerKind: "" /* unknown */, containerName: "", fileName: sourceFile.fileName, kind: kind, name: name, textSpan: textSpan, displayParts: displayParts }, toContextSpan(textSpan, sourceFile, context));
         }
         function getFileAndTextSpanFromNode(node) {
             var sourceFile = node.getSourceFile();
