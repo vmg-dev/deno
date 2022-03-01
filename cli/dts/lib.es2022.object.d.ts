@@ -18,6 +18,11 @@ and limitations under the License.
 /// <reference no-default-lib="true"/>
 
 
-/// <reference lib="es2022" />
-/// <reference lib="esnext.array" />
-/// <reference lib="esnext.intl" />
+interface Object {
+    /**
+     * Determines whether an object has a property with the specified name.
+     * @param o An object.
+     * @param v A property name.
+     */
+    hasOwn(o: object, v: PropertyKey): boolean;
+}

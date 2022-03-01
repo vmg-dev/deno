@@ -18,6 +18,8 @@ and limitations under the License.
 /// <reference no-default-lib="true"/>
 
 
-/// <reference lib="es2022" />
-/// <reference lib="esnext.array" />
-/// <reference lib="esnext.intl" />
+/// <reference lib="es2021" />
+/// <reference lib="es2022.array" />
+/// <reference lib="es2022.error" />
+/// <reference lib="es2022.object" />
+/// <reference lib="es2022.string" />
