@@ -294,7 +294,7 @@ var ts;
     // The following is baselined as a literal template type without intervention
     /** The version of the TypeScript compiler release */
     // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-    ts.version = "4.7.2";
+    ts.version = "4.7.4";
     /* @internal */
     var Comparison;
     (function (Comparison) {
@@ -8583,7 +8583,7 @@ var ts;
         Preserve_unused_imported_values_in_the_JavaScript_output_that_would_otherwise_be_removed: diag(1449, ts.DiagnosticCategory.Message, "Preserve_unused_imported_values_in_the_JavaScript_output_that_would_otherwise_be_removed_1449", "Preserve unused imported values in the JavaScript output that would otherwise be removed."),
         Dynamic_imports_can_only_accept_a_module_specifier_and_an_optional_assertion_as_arguments: diag(1450, ts.DiagnosticCategory.Message, "Dynamic_imports_can_only_accept_a_module_specifier_and_an_optional_assertion_as_arguments_1450", "Dynamic imports can only accept a module specifier and an optional assertion as arguments"),
         Private_identifiers_are_only_allowed_in_class_bodies_and_may_only_be_used_as_part_of_a_class_member_declaration_property_access_or_on_the_left_hand_side_of_an_in_expression: diag(1451, ts.DiagnosticCategory.Error, "Private_identifiers_are_only_allowed_in_class_bodies_and_may_only_be_used_as_part_of_a_class_member__1451", "Private identifiers are only allowed in class bodies and may only be used as part of a class member declaration, property access, or on the left-hand-side of an 'in' expression"),
-        Resolution_modes_are_only_supported_when_moduleResolution_is_node16_or_nodenext: diag(1452, ts.DiagnosticCategory.Error, "Resolution_modes_are_only_supported_when_moduleResolution_is_node16_or_nodenext_1452", "Resolution modes are only supported when `moduleResolution` is `node16` or `nodenext`."),
+        resolution_mode_assertions_are_only_supported_when_moduleResolution_is_node16_or_nodenext: diag(1452, ts.DiagnosticCategory.Error, "resolution_mode_assertions_are_only_supported_when_moduleResolution_is_node16_or_nodenext_1452", "'resolution-mode' assertions are only supported when `moduleResolution` is `node16` or `nodenext`."),
         resolution_mode_should_be_either_require_or_import: diag(1453, ts.DiagnosticCategory.Error, "resolution_mode_should_be_either_require_or_import_1453", "`resolution-mode` should be either `require` or `import`."),
         resolution_mode_can_only_be_set_for_type_only_imports: diag(1454, ts.DiagnosticCategory.Error, "resolution_mode_can_only_be_set_for_type_only_imports_1454", "`resolution-mode` can only be set for type-only imports."),
         resolution_mode_is_the_only_valid_key_for_type_import_assertions: diag(1455, ts.DiagnosticCategory.Error, "resolution_mode_is_the_only_valid_key_for_type_import_assertions_1455", "`resolution-mode` is the only valid key for type import assertions."),
@@ -9087,6 +9087,7 @@ var ts;
         Import_assertions_are_not_allowed_on_statements_that_transpile_to_commonjs_require_calls: diag(2836, ts.DiagnosticCategory.Error, "Import_assertions_are_not_allowed_on_statements_that_transpile_to_commonjs_require_calls_2836", "Import assertions are not allowed on statements that transpile to commonjs 'require' calls."),
         Import_assertion_values_must_be_string_literal_expressions: diag(2837, ts.DiagnosticCategory.Error, "Import_assertion_values_must_be_string_literal_expressions_2837", "Import assertion values must be string literal expressions."),
         All_declarations_of_0_must_have_identical_constraints: diag(2838, ts.DiagnosticCategory.Error, "All_declarations_of_0_must_have_identical_constraints_2838", "All declarations of '{0}' must have identical constraints."),
+        The_type_of_this_expression_cannot_be_named_without_a_resolution_mode_assertion_which_is_an_unstable_feature_Use_nightly_TypeScript_to_silence_this_error_Try_updating_with_npm_install_D_typescript_next: diag(2841, ts.DiagnosticCategory.Error, "The_type_of_this_expression_cannot_be_named_without_a_resolution_mode_assertion_which_is_an_unstable_2841", "The type of this expression cannot be named without a 'resolution-mode' assertion, which is an unstable feature. Use nightly TypeScript to silence this error. Try updating with 'npm install -D typescript@next'."),
         Import_declaration_0_is_using_private_name_1: diag(4000, ts.DiagnosticCategory.Error, "Import_declaration_0_is_using_private_name_1_4000", "Import declaration '{0}' is using private name '{1}'."),
         Type_parameter_0_of_exported_class_has_or_is_using_private_name_1: diag(4002, ts.DiagnosticCategory.Error, "Type_parameter_0_of_exported_class_has_or_is_using_private_name_1_4002", "Type parameter '{0}' of exported class has or is using private name '{1}'."),
         Type_parameter_0_of_exported_interface_has_or_is_using_private_name_1: diag(4004, ts.DiagnosticCategory.Error, "Type_parameter_0_of_exported_interface_has_or_is_using_private_name_1_4004", "Type parameter '{0}' of exported interface has or is using private name '{1}'."),
@@ -9194,7 +9195,7 @@ var ts;
         This_member_cannot_have_a_JSDoc_comment_with_an_override_tag_because_it_is_not_declared_in_the_base_class_0: diag(4122, ts.DiagnosticCategory.Error, "This_member_cannot_have_a_JSDoc_comment_with_an_override_tag_because_it_is_not_declared_in_the_base__4122", "This member cannot have a JSDoc comment with an '@override' tag because it is not declared in the base class '{0}'."),
         This_member_cannot_have_a_JSDoc_comment_with_an_override_tag_because_it_is_not_declared_in_the_base_class_0_Did_you_mean_1: diag(4123, ts.DiagnosticCategory.Error, "This_member_cannot_have_a_JSDoc_comment_with_an_override_tag_because_it_is_not_declared_in_the_base__4123", "This member cannot have a JSDoc comment with an 'override' tag because it is not declared in the base class '{0}'. Did you mean '{1}'?"),
         Compiler_option_0_of_value_1_is_unstable_Use_nightly_TypeScript_to_silence_this_error_Try_updating_with_npm_install_D_typescript_next: diag(4124, ts.DiagnosticCategory.Error, "Compiler_option_0_of_value_1_is_unstable_Use_nightly_TypeScript_to_silence_this_error_Try_updating_w_4124", "Compiler option '{0}' of value '{1}' is unstable. Use nightly TypeScript to silence this error. Try updating with 'npm install -D typescript@next'."),
-        Resolution_mode_assertions_are_unstable_Use_nightly_TypeScript_to_silence_this_error_Try_updating_with_npm_install_D_typescript_next: diag(4125, ts.DiagnosticCategory.Error, "Resolution_mode_assertions_are_unstable_Use_nightly_TypeScript_to_silence_this_error_Try_updating_wi_4125", "Resolution mode assertions are unstable. Use nightly TypeScript to silence this error. Try updating with 'npm install -D typescript@next'."),
+        resolution_mode_assertions_are_unstable_Use_nightly_TypeScript_to_silence_this_error_Try_updating_with_npm_install_D_typescript_next: diag(4125, ts.DiagnosticCategory.Error, "resolution_mode_assertions_are_unstable_Use_nightly_TypeScript_to_silence_this_error_Try_updating_wi_4125", "'resolution-mode' assertions are unstable. Use nightly TypeScript to silence this error. Try updating with 'npm install -D typescript@next'."),
         The_current_host_does_not_support_the_0_option: diag(5001, ts.DiagnosticCategory.Error, "The_current_host_does_not_support_the_0_option_5001", "The current host does not support the '{0}' option."),
         Cannot_find_the_common_subdirectory_path_for_the_input_files: diag(5009, ts.DiagnosticCategory.Error, "Cannot_find_the_common_subdirectory_path_for_the_input_files_5009", "Cannot find the common subdirectory path for the input files."),
         File_specification_cannot_end_in_a_recursive_directory_wildcard_Asterisk_Asterisk_Colon_0: diag(5010, ts.DiagnosticCategory.Error, "File_specification_cannot_end_in_a_recursive_directory_wildcard_Asterisk_Asterisk_Colon_0_5010", "File specification cannot end in a recursive directory wildcard ('**'): '{0}'."),
@@ -16212,6 +16213,8 @@ var ts;
             case 218 /* SyntaxKind.AwaitExpression */:
             case 231 /* SyntaxKind.MetaProperty */:
                 return true;
+            case 228 /* SyntaxKind.ExpressionWithTypeArguments */:
+                return !ts.isHeritageClause(node.parent);
             case 161 /* SyntaxKind.QualifiedName */:
                 while (node.parent.kind === 161 /* SyntaxKind.QualifiedName */) {
                     node = node.parent;
@@ -16383,9 +16386,6 @@ var ts;
     }
     ts.isVariableDeclarationInitializedToBareOrAccessedRequire = isVariableDeclarationInitializedToBareOrAccessedRequire;
     function isVariableDeclarationInitializedWithRequireHelper(node, allowAccessedRequire) {
-        if (node.kind === 203 /* SyntaxKind.BindingElement */) {
-            node = node.parent.parent;
-        }
         return ts.isVariableDeclaration(node) &&
             !!node.initializer &&
             isRequireCall(allowAccessedRequire ? getLeftmostAccessExpression(node.initializer) : node.initializer, /*requireStringLiteralLikeArgument*/ true);
@@ -20207,8 +20207,9 @@ var ts;
      */
     function isFileForcedToBeModuleByFormat(file) {
         // Excludes declaration files - they still require an explicit `export {}` or the like
-        // for back compat purposes.
-        return file.impliedNodeFormat === ts.ModuleKind.ESNext && !file.isDeclarationFile ? true : undefined;
+        // for back compat purposes. The only non-declaration files _not_ forced to be a module are `.js` files
+        // that aren't esm-mode (meaning not in a `type: module` scope).
+        return (file.impliedNodeFormat === ts.ModuleKind.ESNext || (ts.fileExtensionIsOneOf(file.fileName, [".cjs" /* Extension.Cjs */, ".cts" /* Extension.Cts */]))) && !file.isDeclarationFile ? true : undefined;
     }
     function getSetExternalModuleIndicator(options) {
         // TODO: Should this callback be cached?
@@ -20216,7 +20217,7 @@ var ts;
             case ts.ModuleDetectionKind.Force:
                 // All non-declaration files are modules, declaration files still do the usual isFileProbablyExternalModule
                 return function (file) {
-                    file.externalModuleIndicator = !file.isDeclarationFile || ts.isFileProbablyExternalModule(file);
+                    file.externalModuleIndicator = ts.isFileProbablyExternalModule(file) || !file.isDeclarationFile || undefined;
                 };
             case ts.ModuleDetectionKind.Legacy:
                 // Files are modules if they have imports, exports, or import.meta
@@ -20276,7 +20277,8 @@ var ts;
     }
     ts.getEmitModuleResolutionKind = getEmitModuleResolutionKind;
     function getEmitModuleDetectionKind(options) {
-        return options.moduleDetection || ts.ModuleDetectionKind.Auto;
+        return options.moduleDetection ||
+            (getEmitModuleKind(options) === ts.ModuleKind.Node16 || getEmitModuleKind(options) === ts.ModuleKind.NodeNext ? ts.ModuleDetectionKind.Force : ts.ModuleDetectionKind.Auto);
     }
     ts.getEmitModuleDetectionKind = getEmitModuleDetectionKind;
     function hasJsonModuleEmitEnabled(options) {
@@ -29256,6 +29258,10 @@ var ts;
         return node.kind === 267 /* SyntaxKind.ImportClause */;
     }
     ts.isImportClause = isImportClause;
+    function isImportTypeAssertionContainer(node) {
+        return node.kind === 295 /* SyntaxKind.ImportTypeAssertionContainer */;
+    }
+    ts.isImportTypeAssertionContainer = isImportTypeAssertionContainer;
     function isAssertClause(node) {
         return node.kind === 293 /* SyntaxKind.AssertClause */;
     }
@@ -35612,10 +35618,11 @@ var ts;
             }
             nextToken();
             var typeArguments = parseDelimitedList(20 /* ParsingContext.TypeArguments */, parseType);
-            if (!parseExpected(31 /* SyntaxKind.GreaterThanToken */)) {
+            if (reScanGreaterToken() !== 31 /* SyntaxKind.GreaterThanToken */) {
                 // If it doesn't have the closing `>` then it's definitely not an type argument list.
                 return undefined;
             }
+            nextToken();
             // We successfully parsed a type argument list. The next token determines whether we want to
             // treat it as such. If the type argument list is followed by `(` or a template literal, as in
             // `f<number>(42)`, we favor the type argument interpretation even though JavaScript would view
@@ -42203,7 +42210,7 @@ var ts;
         }
         if (ts.isImplicitGlob(spec.substring(spec.lastIndexOf(ts.directorySeparator) + 1))) {
             return {
-                key: useCaseSensitiveFileNames ? spec : ts.toFileNameLowerCase(spec),
+                key: ts.removeTrailingDirectorySeparator(useCaseSensitiveFileNames ? spec : ts.toFileNameLowerCase(spec)),
                 flags: 1 /* WatchDirectoryFlags.Recursive */
             };
         }
@@ -43308,16 +43315,20 @@ var ts;
     function nodeNextModuleNameResolver(moduleName, containingFile, compilerOptions, host, cache, redirectedReference, resolutionMode) {
         return nodeNextModuleNameResolverWorker(NodeResolutionFeatures.NodeNextDefault, moduleName, containingFile, compilerOptions, host, cache, redirectedReference, resolutionMode);
     }
-    function nodeNextModuleNameResolverWorker(features, moduleName, containingFile, compilerOptions, host, cache, redirectedReference, resolutionMode) {
-        var containingDirectory = ts.getDirectoryPath(containingFile);
-        // es module file or cjs-like input file, use a variant of the legacy cjs resolver that supports the selected modern features
-        var esmMode = resolutionMode === ts.ModuleKind.ESNext ? NodeResolutionFeatures.EsmMode : 0;
-        return nodeModuleNameResolverWorker(features | esmMode, moduleName, containingDirectory, compilerOptions, host, cache, compilerOptions.resolveJsonModule ? tsPlusJsonExtensions : tsExtensions, redirectedReference);
-    }
     var jsOnlyExtensions = [Extensions.JavaScript];
     var tsExtensions = [Extensions.TypeScript, Extensions.JavaScript];
     var tsPlusJsonExtensions = __spreadArray(__spreadArray([], tsExtensions, true), [Extensions.Json], false);
     var tsconfigExtensions = [Extensions.TSConfig];
+    function nodeNextModuleNameResolverWorker(features, moduleName, containingFile, compilerOptions, host, cache, redirectedReference, resolutionMode) {
+        var containingDirectory = ts.getDirectoryPath(containingFile);
+        // es module file or cjs-like input file, use a variant of the legacy cjs resolver that supports the selected modern features
+        var esmMode = resolutionMode === ts.ModuleKind.ESNext ? NodeResolutionFeatures.EsmMode : 0;
+        var extensions = compilerOptions.noDtsResolution ? [Extensions.TsOnly, Extensions.JavaScript] : tsExtensions;
+        if (compilerOptions.resolveJsonModule) {
+            extensions = __spreadArray(__spreadArray([], extensions, true), [Extensions.Json], false);
+        }
+        return nodeModuleNameResolverWorker(features | esmMode, moduleName, containingDirectory, compilerOptions, host, cache, extensions, redirectedReference);
+    }
     function tryResolveJSModuleWorker(moduleName, initialDir, host) {
         return nodeModuleNameResolverWorker(NodeResolutionFeatures.None, moduleName, initialDir, { moduleResolution: ts.ModuleResolutionKind.NodeJs, allowJs: true }, host, /*cache*/ undefined, jsOnlyExtensions, /*redirectedReferences*/ undefined);
     }
@@ -44000,13 +44011,36 @@ var ts;
         }
         return toSearchResult(/*value*/ undefined);
     }
+    /**
+     * From https://github.com/nodejs/node/blob/8f39f51cbbd3b2de14b9ee896e26421cc5b20121/lib/internal/modules/esm/resolve.js#L722 -
+     * "longest" has some nuance as to what "longest" means in the presence of pattern trailers
+     */
+    function comparePatternKeys(a, b) {
+        var aPatternIndex = a.indexOf("*");
+        var bPatternIndex = b.indexOf("*");
+        var baseLenA = aPatternIndex === -1 ? a.length : aPatternIndex + 1;
+        var baseLenB = bPatternIndex === -1 ? b.length : bPatternIndex + 1;
+        if (baseLenA > baseLenB)
+            return -1;
+        if (baseLenB > baseLenA)
+            return 1;
+        if (aPatternIndex === -1)
+            return 1;
+        if (bPatternIndex === -1)
+            return -1;
+        if (a.length > b.length)
+            return -1;
+        if (b.length > a.length)
+            return 1;
+        return 0;
+    }
     function loadModuleFromImportsOrExports(extensions, state, cache, redirectedReference, moduleName, lookupTable, scope, isImports) {
         var loadModuleFromTargetImportOrExport = getLoadModuleFromTargetImportOrExport(extensions, state, cache, redirectedReference, moduleName, scope, isImports);
         if (!ts.endsWith(moduleName, ts.directorySeparator) && moduleName.indexOf("*") === -1 && ts.hasProperty(lookupTable, moduleName)) {
             var target = lookupTable[moduleName];
             return loadModuleFromTargetImportOrExport(target, /*subpath*/ "", /*pattern*/ false);
         }
-        var expandingKeys = ts.sort(ts.filter(ts.getOwnKeys(lookupTable), function (k) { return k.indexOf("*") !== -1 || ts.endsWith(k, "/"); }), function (a, b) { return a.length - b.length; });
+        var expandingKeys = ts.sort(ts.filter(ts.getOwnKeys(lookupTable), function (k) { return k.indexOf("*") !== -1 || ts.endsWith(k, "/"); }), comparePatternKeys);
         for (var _i = 0, expandingKeys_1 = expandingKeys; _i < expandingKeys_1.length; _i++) {
             var potentialTarget = expandingKeys_1[_i];
             if (state.features & NodeResolutionFeatures.ExportsPatternTrailers && matchesPatternWithTrailer(potentialTarget, moduleName)) {
@@ -44325,8 +44359,8 @@ var ts;
             var pathAndExtension = loadModuleFromFile(extensions, candidate, onlyRecordFailures, state) ||
                 loadNodeModuleFromDirectoryWorker(extensions, candidate, onlyRecordFailures, state, packageInfo && packageInfo.packageJsonContent, packageInfo && packageInfo.versionPaths);
             if (!pathAndExtension && packageInfo
-                && packageInfo.packageJsonContent.exports === undefined
-                && packageInfo.packageJsonContent.main === undefined
+                // eslint-disable-next-line no-null/no-null
+                && (packageInfo.packageJsonContent.exports === undefined || packageInfo.packageJsonContent.exports === null)
                 && state.features & NodeResolutionFeatures.EsmMode) {
                 // EsmMode disables index lookup in `loadNodeModuleFromDirectoryWorker` generally, however non-relative package resolutions still assume
                 // a default `index.js` entrypoint if no `main` or `exports` are present
@@ -47102,12 +47136,14 @@ var ts;
             }
         }
         function setCommonJsModuleIndicator(node) {
-            if (file.externalModuleIndicator) {
+            if (file.externalModuleIndicator && file.externalModuleIndicator !== true) {
                 return false;
             }
             if (!file.commonJsModuleIndicator) {
                 file.commonJsModuleIndicator = node;
-                bindSourceFileAsExternalModule();
+                if (!file.externalModuleIndicator) {
+                    bindSourceFileAsExternalModule();
+                }
             }
             return true;
         }
@@ -47521,7 +47557,11 @@ var ts;
                 checkStrictModeEvalOrArguments(node, node.name);
             }
             if (!ts.isBindingPattern(node.name)) {
-                if (ts.isInJSFile(node) && ts.isVariableDeclarationInitializedToBareOrAccessedRequire(node) && !ts.getJSDocTypeTag(node) && !(ts.getCombinedModifierFlags(node) & 1 /* ModifierFlags.Export */)) {
+                var possibleVariableDecl = node.kind === 254 /* SyntaxKind.VariableDeclaration */ ? node : node.parent.parent;
+                if (ts.isInJSFile(node) &&
+                    ts.isVariableDeclarationInitializedToBareOrAccessedRequire(possibleVariableDecl) &&
+                    !ts.getJSDocTypeTag(node) &&
+                    !(ts.getCombinedModifierFlags(node) & 1 /* ModifierFlags.Export */)) {
                     declareSymbolAndAddToSymbolTable(node, 2097152 /* SymbolFlags.Alias */, 2097152 /* SymbolFlags.AliasExcludes */);
                 }
                 else if (ts.isBlockOrCatchScoped(node)) {
@@ -50348,7 +50388,8 @@ var ts;
                     && isAliasableOrJsExpression(node.parent.right)
                 || node.kind === 297 /* SyntaxKind.ShorthandPropertyAssignment */
                 || node.kind === 296 /* SyntaxKind.PropertyAssignment */ && isAliasableOrJsExpression(node.initializer)
-                || ts.isVariableDeclarationInitializedToBareOrAccessedRequire(node);
+                || node.kind === 254 /* SyntaxKind.VariableDeclaration */ && ts.isVariableDeclarationInitializedToBareOrAccessedRequire(node)
+                || node.kind === 203 /* SyntaxKind.BindingElement */ && ts.isVariableDeclarationInitializedToBareOrAccessedRequire(node.parent.parent);
         }
         function isAliasableOrJsExpression(e) {
             return ts.isAliasableExpression(e) || ts.isFunctionExpression(e) && isJSConstructor(e);
@@ -50441,7 +50482,7 @@ var ts;
                 return hasExportAssignmentSymbol(moduleSymbol);
             }
             // JS files have a synthetic default if they do not contain ES2015+ module syntax (export = is not valid in js) _and_ do not have an __esModule marker
-            return !file.externalModuleIndicator && !resolveExportByName(moduleSymbol, ts.escapeLeadingUnderscores("__esModule"), /*sourceNode*/ undefined, dontResolveAlias);
+            return typeof file.externalModuleIndicator !== "object" && !resolveExportByName(moduleSymbol, ts.escapeLeadingUnderscores("__esModule"), /*sourceNode*/ undefined, dontResolveAlias);
         }
         function getTargetOfImportClause(node, dontResolveAlias) {
             var _a;
@@ -53556,6 +53597,7 @@ var ts;
                 return symbol.parent ? ts.factory.createQualifiedName(symbolToEntityNameNode(symbol.parent), identifier) : identifier;
             }
             function symbolToTypeNode(symbol, context, meaning, overrideTypeArguments) {
+                var _a, _b, _c, _d;
                 var chain = lookupSymbolChain(symbol, context, meaning, !(context.flags & 16384 /* NodeBuilderFlags.UseAliasDefinedOutsideCurrentScope */)); // If we're using aliases outside the current scope, dont bother with the module
                 var isTypeOf = meaning === 111551 /* SymbolFlags.Value */;
                 if (ts.some(chain[0].declarations, hasNonGlobalAugmentationExternalModuleSymbol)) {
@@ -53573,6 +53615,7 @@ var ts;
                             assertion = ts.factory.createImportTypeAssertionContainer(ts.factory.createAssertClause(ts.factory.createNodeArray([
                                 ts.factory.createAssertEntry(ts.factory.createStringLiteral("resolution-mode"), ts.factory.createStringLiteral("import"))
                             ])));
+                            (_b = (_a = context.tracker).reportImportTypeNodeResolutionModeOverride) === null || _b === void 0 ? void 0 : _b.call(_a);
                         }
                     }
                     if (!specifier) {
@@ -53592,6 +53635,7 @@ var ts;
                                 assertion = ts.factory.createImportTypeAssertionContainer(ts.factory.createAssertClause(ts.factory.createNodeArray([
                                     ts.factory.createAssertEntry(ts.factory.createStringLiteral("resolution-mode"), ts.factory.createStringLiteral(swappedMode === ts.ModuleKind.ESNext ? "import" : "require"))
                                 ])));
+                                (_d = (_c = context.tracker).reportImportTypeNodeResolutionModeOverride) === null || _d === void 0 ? void 0 : _d.call(_c);
                             }
                         }
                         if (!assertion) {
@@ -59080,7 +59124,7 @@ var ts;
             var objectType;
             return !!(type.flags & 8388608 /* TypeFlags.IndexedAccess */ && ts.getObjectFlags(objectType = type.objectType) & 32 /* ObjectFlags.Mapped */ &&
                 !isGenericMappedType(objectType) && isGenericIndexType(type.indexType) &&
-                !objectType.declaration.questionToken && !objectType.declaration.nameType);
+                !(getMappedTypeModifiers(objectType) & 8 /* MappedTypeModifiers.ExcludeOptional */) && !objectType.declaration.nameType);
         }
         /**
          * For a type parameter, return the base constraint of the type parameter. For the string, number,
@@ -80831,8 +80875,11 @@ var ts;
             if (node.assertions) {
                 var override = ts.getResolutionModeOverrideForClause(node.assertions.assertClause, grammarErrorOnNode);
                 if (override) {
+                    if (!ts.isNightly()) {
+                        grammarErrorOnNode(node.assertions.assertClause, ts.Diagnostics.resolution_mode_assertions_are_unstable_Use_nightly_TypeScript_to_silence_this_error_Try_updating_with_npm_install_D_typescript_next);
+                    }
                     if (ts.getEmitModuleResolutionKind(compilerOptions) !== ts.ModuleResolutionKind.Node16 && ts.getEmitModuleResolutionKind(compilerOptions) !== ts.ModuleResolutionKind.NodeNext) {
-                        grammarErrorOnNode(node.assertions.assertClause, ts.Diagnostics.Resolution_modes_are_only_supported_when_moduleResolution_is_node16_or_nodenext);
+                        grammarErrorOnNode(node.assertions.assertClause, ts.Diagnostics.resolution_mode_assertions_are_only_supported_when_moduleResolution_is_node16_or_nodenext);
                     }
                 }
             }
@@ -82535,7 +82582,7 @@ var ts;
             }
             // For a commonjs `const x = require`, validate the alias and exit
             var symbol = getSymbolOfNode(node);
-            if (symbol.flags & 2097152 /* SymbolFlags.Alias */ && ts.isVariableDeclarationInitializedToBareOrAccessedRequire(node)) {
+            if (symbol.flags & 2097152 /* SymbolFlags.Alias */ && ts.isVariableDeclarationInitializedToBareOrAccessedRequire(node.kind === 203 /* SyntaxKind.BindingElement */ ? node.parent.parent : node)) {
                 checkAliasSymbol(node);
                 return;
             }
@@ -85203,10 +85250,10 @@ var ts;
                 var override = ts.getResolutionModeOverrideForClause(declaration.assertClause, validForTypeAssertions ? grammarErrorOnNode : undefined);
                 if (validForTypeAssertions && override) {
                     if (!ts.isNightly()) {
-                        grammarErrorOnNode(declaration.assertClause, ts.Diagnostics.Resolution_mode_assertions_are_unstable_Use_nightly_TypeScript_to_silence_this_error_Try_updating_with_npm_install_D_typescript_next);
+                        grammarErrorOnNode(declaration.assertClause, ts.Diagnostics.resolution_mode_assertions_are_unstable_Use_nightly_TypeScript_to_silence_this_error_Try_updating_with_npm_install_D_typescript_next);
                     }
                     if (ts.getEmitModuleResolutionKind(compilerOptions) !== ts.ModuleResolutionKind.Node16 && ts.getEmitModuleResolutionKind(compilerOptions) !== ts.ModuleResolutionKind.NodeNext) {
-                        return grammarErrorOnNode(declaration.assertClause, ts.Diagnostics.Resolution_modes_are_only_supported_when_moduleResolution_is_node16_or_nodenext);
+                        return grammarErrorOnNode(declaration.assertClause, ts.Diagnostics.resolution_mode_assertions_are_only_supported_when_moduleResolution_is_node16_or_nodenext);
                     }
                     return; // Other grammar checks do not apply to type-only imports with resolution mode assertions
                 }
@@ -108058,7 +108105,8 @@ var ts;
             trackReferencedAmbientModule: trackReferencedAmbientModule,
             trackExternalModuleSymbolOfImportTypeNode: trackExternalModuleSymbolOfImportTypeNode,
             reportNonlocalAugmentation: reportNonlocalAugmentation,
-            reportNonSerializableProperty: reportNonSerializableProperty
+            reportNonSerializableProperty: reportNonSerializableProperty,
+            reportImportTypeNodeResolutionModeOverride: reportImportTypeNodeResolutionModeOverride,
         };
         var errorNameNode;
         var errorFallbackNode;
@@ -108183,6 +108231,11 @@ var ts;
         function reportNonSerializableProperty(propertyName) {
             if (errorNameNode || errorFallbackNode) {
                 context.addDiagnostic(ts.createDiagnosticForNode((errorNameNode || errorFallbackNode), ts.Diagnostics.The_type_of_this_node_cannot_be_serialized_because_its_property_0_cannot_be_serialized, propertyName));
+            }
+        }
+        function reportImportTypeNodeResolutionModeOverride() {
+            if (!ts.isNightly() && (errorNameNode || errorFallbackNode)) {
+                context.addDiagnostic(ts.createDiagnosticForNode((errorNameNode || errorFallbackNode), ts.Diagnostics.The_type_of_this_expression_cannot_be_named_without_a_resolution_mode_assertion_which_is_an_unstable_feature_Use_nightly_TypeScript_to_silence_this_error_Try_updating_with_npm_install_D_typescript_next));
             }
         }
         function transformDeclarationsForJS(sourceFile, bundled) {
@@ -108635,7 +108688,7 @@ var ts;
             var mode = ts.getResolutionModeOverrideForClause(assertClause);
             if (mode !== undefined) {
                 if (!ts.isNightly()) {
-                    context.addDiagnostic(ts.createDiagnosticForNode(assertClause, ts.Diagnostics.Resolution_mode_assertions_are_unstable_Use_nightly_TypeScript_to_silence_this_error_Try_updating_with_npm_install_D_typescript_next));
+                    context.addDiagnostic(ts.createDiagnosticForNode(assertClause, ts.Diagnostics.resolution_mode_assertions_are_unstable_Use_nightly_TypeScript_to_silence_this_error_Try_updating_with_npm_install_D_typescript_next));
                 }
                 return assertClause;
             }
@@ -116142,12 +116195,14 @@ var ts;
     }
     ts.loadWithTypeDirectiveCache = loadWithTypeDirectiveCache;
     ;
-    /* @internal */
+    /**
+     * Calculates the resulting resolution mode for some reference in some file - this is generally the explicitly
+     * provided resolution mode in the reference, unless one is not present, in which case it is the mode of the containing file.
+     */
     function getModeForFileReference(ref, containingFileMode) {
         return (ts.isString(ref) ? containingFileMode : ref.resolutionMode) || containingFileMode;
     }
     ts.getModeForFileReference = getModeForFileReference;
-    /* @internal */
     function getModeForResolutionAtIndex(file, index) {
         if (file.impliedNodeFormat === undefined)
             return undefined;
@@ -116168,7 +116223,15 @@ var ts;
         return false;
     }
     ts.isExclusivelyTypeOnlyImportOrExport = isExclusivelyTypeOnlyImportOrExport;
-    /* @internal */
+    /**
+     * Calculates the final resolution mode for a given module reference node. This is generally the explicitly provided resolution mode, if
+     * one exists, or the mode of the containing source file. (Excepting import=require, which is always commonjs, and dynamic import, which is always esm).
+     * Notably, this function always returns `undefined` if the containing file has an `undefined` `impliedNodeFormat` - this field is only set when
+     * `moduleResolution` is `node16`+.
+     * @param file The file the import or import-like reference is contained within
+     * @param usage The module reference string
+     * @returns The final resolution mode of the import
+     */
     function getModeForUsageLocation(file, usage) {
         var _a, _b;
         if (file.impliedNodeFormat === undefined)
@@ -118402,7 +118465,7 @@ var ts;
                 ts.setResolvedTypeReferenceDirective(file, fileName, resolvedTypeReferenceDirective);
                 var mode = ref.resolutionMode || file.impliedNodeFormat;
                 if (mode && ts.getEmitModuleResolutionKind(options) !== ts.ModuleResolutionKind.Node16 && ts.getEmitModuleResolutionKind(options) !== ts.ModuleResolutionKind.NodeNext) {
-                    programDiagnostics.add(ts.createDiagnosticForRange(file, ref, ts.Diagnostics.Resolution_modes_are_only_supported_when_moduleResolution_is_node16_or_nodenext));
+                    programDiagnostics.add(ts.createDiagnosticForRange(file, ref, ts.Diagnostics.resolution_mode_assertions_are_only_supported_when_moduleResolution_is_node16_or_nodenext));
                 }
                 processTypeReferenceDirective(fileName, mode, resolvedTypeReferenceDirective, { kind: ts.FileIncludeKind.TypeReferenceDirective, file: file.path, index: index, });
             }
@@ -123695,6 +123758,7 @@ var ts;
         }
         function reloadFileNamesFromConfigFile() {
             writeLog("Reloading new file names and options");
+            reloadLevel = ts.ConfigFileProgramReloadLevel.None;
             rootFileNames = ts.getFileNamesFromConfigSpecs(compilerOptions.configFile.configFileSpecs, ts.getNormalizedAbsolutePath(ts.getDirectoryPath(configFileName), currentDirectory), compilerOptions, parseConfigFileHost, extraFileExtensions);
             if (ts.updateErrorForNoInputFiles(rootFileNames, ts.getNormalizedAbsolutePath(configFileName, currentDirectory), compilerOptions.configFile.configFileSpecs, configFileParsingDiagnostics, canConfigFileJsonReportNoInputFiles)) {
                 hasChangedConfigFileParsingErrors = true;
@@ -132016,10 +132080,9 @@ var ts;
             GlobalsSearch[GlobalsSearch["Success"] = 1] = "Success";
             GlobalsSearch[GlobalsSearch["Fail"] = 2] = "Fail";
         })(GlobalsSearch || (GlobalsSearch = {}));
-        function resolvingModuleSpecifiers(logPrefix, host, program, sourceFile, position, preferences, isForImportStatementCompletion, isValidTypeOnlyUseSite, cb) {
+        function resolvingModuleSpecifiers(logPrefix, host, resolver, program, position, preferences, isForImportStatementCompletion, isValidTypeOnlyUseSite, cb) {
             var _a, _b, _c;
             var start = ts.timestamp();
-            var packageJsonImportFilter = ts.createPackageJsonImportFilter(sourceFile, preferences, host);
             // Under `--moduleResolution nodenext`, we have to resolve module specifiers up front, because
             // package.json exports can mean we *can't* resolve a module specifier (that doesn't include a
             // relative path into node_modules), and we want to filter those completions out entirely.
@@ -132044,7 +132107,7 @@ var ts;
             return result;
             function tryResolve(exportInfo, symbolName, isFromAmbientModule) {
                 if (isFromAmbientModule) {
-                    var result_1 = ts.codefix.getModuleSpecifierForBestExportInfo(exportInfo, symbolName, position, isValidTypeOnlyUseSite, sourceFile, program, host, preferences);
+                    var result_1 = resolver.getModuleSpecifierForBestExportInfo(exportInfo, symbolName, position, isValidTypeOnlyUseSite);
                     if (result_1) {
                         ambientCount++;
                     }
@@ -132053,7 +132116,7 @@ var ts;
                 var shouldResolveModuleSpecifier = needsFullResolution || preferences.allowIncompleteCompletions && resolvedCount < Completions.moduleSpecifierResolutionLimit;
                 var shouldGetModuleSpecifierFromCache = !shouldResolveModuleSpecifier && preferences.allowIncompleteCompletions && cacheAttemptCount < Completions.moduleSpecifierResolutionCacheAttemptLimit;
                 var result = (shouldResolveModuleSpecifier || shouldGetModuleSpecifierFromCache)
-                    ? ts.codefix.getModuleSpecifierForBestExportInfo(exportInfo, symbolName, position, isValidTypeOnlyUseSite, sourceFile, program, host, preferences, packageJsonImportFilter, shouldGetModuleSpecifierFromCache)
+                    ? resolver.getModuleSpecifierForBestExportInfo(exportInfo, symbolName, position, isValidTypeOnlyUseSite, shouldGetModuleSpecifierFromCache)
                     : undefined;
                 if (!shouldResolveModuleSpecifier && !shouldGetModuleSpecifierFromCache || shouldGetModuleSpecifierFromCache && !result) {
                     skippedAny = true;
@@ -132158,7 +132221,7 @@ var ts;
                 return undefined;
             var lowerCaseTokenText = location.text.toLowerCase();
             var exportMap = ts.getExportInfoMap(file, host, program, cancellationToken);
-            var newEntries = resolvingModuleSpecifiers("continuePreviousIncompleteResponse", host, program, file, location.getStart(), preferences, 
+            var newEntries = resolvingModuleSpecifiers("continuePreviousIncompleteResponse", host, ts.codefix.createImportSpecifierResolver(file, program, host, preferences), program, location.getStart(), preferences, 
             /*isForImportStatementCompletion*/ false, ts.isValidTypeOnlyAliasUseSite(location), function (context) {
                 var entries = ts.mapDefined(previousResponse.entries, function (entry) {
                     var _a;
@@ -133489,6 +133552,7 @@ var ts;
             var hasUnresolvedAutoImports = false;
             // This also gets mutated in nested-functions after the return
             var symbols = [];
+            var importSpecifierResolver;
             var symbolToOriginInfoMap = [];
             var symbolToSortTextMap = [];
             var seenPropertySymbols = new ts.Map();
@@ -133710,14 +133774,14 @@ var ts;
                         }
                         else {
                             var fileName = ts.isExternalModuleNameRelative(ts.stripQuotes(moduleSymbol.name)) ? (_a = ts.getSourceFileOfModule(moduleSymbol)) === null || _a === void 0 ? void 0 : _a.fileName : undefined;
-                            var moduleSpecifier = (ts.codefix.getModuleSpecifierForBestExportInfo([{
+                            var moduleSpecifier = ((importSpecifierResolver || (importSpecifierResolver = ts.codefix.createImportSpecifierResolver(sourceFile, program, host, preferences))).getModuleSpecifierForBestExportInfo([{
                                     exportKind: 0 /* ExportKind.Named */,
                                     moduleFileName: fileName,
                                     isFromPackageJson: false,
                                     moduleSymbol: moduleSymbol,
                                     symbol: firstAccessibleSymbol,
                                     targetFlags: ts.skipAlias(firstAccessibleSymbol, typeChecker).flags,
-                                }], firstAccessibleSymbol.name, position, ts.isValidTypeOnlyAliasUseSite(location), sourceFile, program, host, preferences) || {}).moduleSpecifier;
+                                }], firstAccessibleSymbol.name, position, ts.isValidTypeOnlyAliasUseSite(location)) || {}).moduleSpecifier;
                             if (moduleSpecifier) {
                                 var origin = {
                                     kind: getNullableSymbolOriginInfoKind(6 /* SymbolOriginInfoKind.SymbolMemberExport */),
@@ -133973,7 +134037,7 @@ var ts;
                 var exportInfo = ts.getExportInfoMap(sourceFile, host, program, cancellationToken);
                 var packageJsonAutoImportProvider = (_b = host.getPackageJsonAutoImportProvider) === null || _b === void 0 ? void 0 : _b.call(host);
                 var packageJsonFilter = detailsEntryId ? undefined : ts.createPackageJsonImportFilter(sourceFile, preferences, host);
-                resolvingModuleSpecifiers("collectAutoImports", host, program, sourceFile, position, preferences, !!importCompletionNode, ts.isValidTypeOnlyAliasUseSite(location), function (context) {
+                resolvingModuleSpecifiers("collectAutoImports", host, importSpecifierResolver || (importSpecifierResolver = ts.codefix.createImportSpecifierResolver(sourceFile, program, host, preferences)), program, position, preferences, !!importCompletionNode, ts.isValidTypeOnlyAliasUseSite(location), function (context) {
                     exportInfo.search(sourceFile.path, 
                     /*preferCapitalized*/ isRightOfOpenTag, function (symbolName, targetFlags) {
                         if (!ts.isIdentifierText(symbolName, ts.getEmitScriptTarget(host.getCompilationSettings())))
@@ -136686,7 +136750,7 @@ var ts;
                     ts.Debug.assert(parent.name === node);
                     return true;
                 case 203 /* SyntaxKind.BindingElement */:
-                    return ts.isInJSFile(node) && ts.isVariableDeclarationInitializedToBareOrAccessedRequire(parent);
+                    return ts.isInJSFile(node) && ts.isVariableDeclarationInitializedToBareOrAccessedRequire(parent.parent.parent);
                 default:
                     return false;
             }
@@ -138151,7 +138215,7 @@ var ts;
                 // Use the parent symbol if the location is commonjs require syntax on javascript files only.
                 if (ts.isInJSFile(referenceLocation)
                     && referenceLocation.parent.kind === 203 /* SyntaxKind.BindingElement */
-                    && ts.isVariableDeclarationInitializedToBareOrAccessedRequire(referenceLocation.parent)) {
+                    && ts.isVariableDeclarationInitializedToBareOrAccessedRequire(referenceLocation.parent.parent.parent)) {
                     referenceSymbol = referenceLocation.parent.symbol;
                     // The parent will not have a symbol if it's an ObjectBindingPattern (when destructuring is used).  In
                     // this case, just skip it, since the bound identifiers are not an alias of the import.
@@ -153004,6 +153068,18 @@ var ts;
                 return addToNamespace.length > 0 || importType.length > 0 || addToExisting.size > 0 || newImports.size > 0;
             }
         }
+        function createImportSpecifierResolver(importingFile, program, host, preferences) {
+            var packageJsonImportFilter = ts.createPackageJsonImportFilter(importingFile, preferences, host);
+            var importMap = createExistingImportMap(program.getTypeChecker(), importingFile, program.getCompilerOptions());
+            return { getModuleSpecifierForBestExportInfo: getModuleSpecifierForBestExportInfo };
+            function getModuleSpecifierForBestExportInfo(exportInfo, symbolName, position, isValidTypeOnlyUseSite, fromCacheOnly) {
+                var _a = getImportFixes(exportInfo, { symbolName: symbolName, position: position }, isValidTypeOnlyUseSite, 
+                /*useRequire*/ false, program, importingFile, host, preferences, importMap, fromCacheOnly), fixes = _a.fixes, computedWithoutCacheCount = _a.computedWithoutCacheCount;
+                var result = getBestFix(fixes, importingFile, program, packageJsonImportFilter, host);
+                return result && __assign(__assign({}, result), { computedWithoutCacheCount: computedWithoutCacheCount });
+            }
+        }
+        codefix.createImportSpecifierResolver = createImportSpecifierResolver;
         // Sorted with the preferred fix coming first.
         var ImportFixKind;
         (function (ImportFixKind) {
@@ -153104,18 +153180,12 @@ var ts;
                 return !moduleFile || ts.isImportableFile(program, importingFile, moduleFile, preferences, /*packageJsonFilter*/ undefined, getModuleSpecifierResolutionHost(isFromPackageJson), (_a = host.getModuleSpecifierCache) === null || _a === void 0 ? void 0 : _a.call(host));
             }
         }
-        function getModuleSpecifierForBestExportInfo(exportInfo, symbolName, position, isValidTypeOnlyUseSite, importingFile, program, host, preferences, packageJsonImportFilter, fromCacheOnly) {
-            var _a = getImportFixes(exportInfo, { symbolName: symbolName, position: position }, isValidTypeOnlyUseSite, 
-            /*useRequire*/ false, program, importingFile, host, preferences, fromCacheOnly), fixes = _a.fixes, computedWithoutCacheCount = _a.computedWithoutCacheCount;
-            var result = getBestFix(fixes, importingFile, program, packageJsonImportFilter || ts.createPackageJsonImportFilter(importingFile, preferences, host), host);
-            return result && __assign(__assign({}, result), { computedWithoutCacheCount: computedWithoutCacheCount });
-        }
-        codefix.getModuleSpecifierForBestExportInfo = getModuleSpecifierForBestExportInfo;
         function getImportFixes(exportInfos, useNamespaceInfo, 
         /** undefined only for missing JSX namespace */
-        isValidTypeOnlyUseSite, useRequire, program, sourceFile, host, preferences, fromCacheOnly) {
+        isValidTypeOnlyUseSite, useRequire, program, sourceFile, host, preferences, importMap, fromCacheOnly) {
+            if (importMap === void 0) { importMap = createExistingImportMap(program.getTypeChecker(), sourceFile, program.getCompilerOptions()); }
             var checker = program.getTypeChecker();
-            var existingImports = ts.flatMap(exportInfos, function (info) { return getExistingImportDeclarations(info, checker, sourceFile, program.getCompilerOptions()); });
+            var existingImports = ts.flatMap(exportInfos, importMap.getImportsForExportInfo);
             var useNamespace = useNamespaceInfo && tryUseExistingNamespaceImport(existingImports, useNamespaceInfo.symbolName, useNamespaceInfo.position, checker);
             var addToExisting = tryAddToExistingImport(existingImports, isValidTypeOnlyUseSite, checker, program.getCompilerOptions());
             if (addToExisting) {
@@ -153243,21 +153313,37 @@ var ts;
                 };
             });
         }
-        function getExistingImportDeclarations(_a, checker, importingFile, compilerOptions) {
-            var moduleSymbol = _a.moduleSymbol, exportKind = _a.exportKind, targetFlags = _a.targetFlags, symbol = _a.symbol;
-            // Can't use an es6 import for a type in JS.
-            if (!(targetFlags & 111551 /* SymbolFlags.Value */) && ts.isSourceFileJS(importingFile))
-                return ts.emptyArray;
-            var importKind = getImportKind(importingFile, exportKind, compilerOptions);
-            return ts.mapDefined(importingFile.imports, function (moduleSpecifier) {
+        function createExistingImportMap(checker, importingFile, compilerOptions) {
+            var importMap;
+            for (var _i = 0, _a = importingFile.imports; _i < _a.length; _i++) {
+                var moduleSpecifier = _a[_i];
                 var i = ts.importFromModuleSpecifier(moduleSpecifier);
                 if (ts.isVariableDeclarationInitializedToRequire(i.parent)) {
-                    return checker.resolveExternalModuleName(moduleSpecifier) === moduleSymbol ? { declaration: i.parent, importKind: importKind, symbol: symbol, targetFlags: targetFlags } : undefined;
+                    var moduleSymbol = checker.resolveExternalModuleName(moduleSpecifier);
+                    if (moduleSymbol) {
+                        (importMap || (importMap = ts.createMultiMap())).add(ts.getSymbolId(moduleSymbol), i.parent);
+                    }
                 }
-                if (i.kind === 266 /* SyntaxKind.ImportDeclaration */ || i.kind === 265 /* SyntaxKind.ImportEqualsDeclaration */) {
-                    return checker.getSymbolAtLocation(moduleSpecifier) === moduleSymbol ? { declaration: i, importKind: importKind, symbol: symbol, targetFlags: targetFlags } : undefined;
+                else if (i.kind === 266 /* SyntaxKind.ImportDeclaration */ || i.kind === 265 /* SyntaxKind.ImportEqualsDeclaration */) {
+                    var moduleSymbol = checker.getSymbolAtLocation(moduleSpecifier);
+                    if (moduleSymbol) {
+                        (importMap || (importMap = ts.createMultiMap())).add(ts.getSymbolId(moduleSymbol), i);
+                    }
                 }
-            });
+            }
+            return {
+                getImportsForExportInfo: function (_a) {
+                    var moduleSymbol = _a.moduleSymbol, exportKind = _a.exportKind, targetFlags = _a.targetFlags, symbol = _a.symbol;
+                    // Can't use an es6 import for a type in JS.
+                    if (!(targetFlags & 111551 /* SymbolFlags.Value */) && ts.isSourceFileJS(importingFile))
+                        return ts.emptyArray;
+                    var matchingDeclarations = importMap === null || importMap === void 0 ? void 0 : importMap.get(ts.getSymbolId(moduleSymbol));
+                    if (!matchingDeclarations)
+                        return ts.emptyArray;
+                    var importKind = getImportKind(importingFile, exportKind, compilerOptions);
+                    return matchingDeclarations.map(function (declaration) { return ({ declaration: declaration, importKind: importKind, symbol: symbol, targetFlags: targetFlags }); });
+                }
+            };
         }
         function shouldUseRequire(sourceFile, program) {
             // 1. TypeScript files don't use require variable declarations
