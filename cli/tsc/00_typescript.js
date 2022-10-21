@@ -48949,12 +48949,23 @@ var ts;
         var emitResolver = createResolver();
         var nodeBuilder = createNodeBuilder();
         var globals = ts.createSymbolTable();
+        var nodeGlobals = ts.createSymbolTable();
         var undefinedSymbol = createSymbol(4 /* SymbolFlags.Property */, "undefined");
         undefinedSymbol.declarations = [];
         var globalThisSymbol = createSymbol(1536 /* SymbolFlags.Module */, "globalThis", 8 /* CheckFlags.Readonly */);
         globalThisSymbol.exports = globals;
         globalThisSymbol.declarations = [];
         globals.set(globalThisSymbol.escapedName, globalThisSymbol);
+        var denoContext = ts.deno.createDenoForkContext({
+            globals: globals,
+            nodeGlobals: nodeGlobals,
+            mergeSymbol: mergeSymbol,
+            ambientModuleSymbolRegex: ambientModuleSymbolRegex,
+        });
+        var nodeGlobalThisSymbol = createSymbol(1536 /* SymbolFlags.Module */, "globalThis", 8 /* CheckFlags.Readonly */);
+        nodeGlobalThisSymbol.exports = denoContext.combinedGlobals;
+        nodeGlobalThisSymbol.declarations = [];
+        nodeGlobals.set(nodeGlobalThisSymbol.escapedName, nodeGlobalThisSymbol);
         var argumentsSymbol = createSymbol(4 /* SymbolFlags.Property */, "arguments");
         var requireSymbol = createSymbol(4 /* SymbolFlags.Property */, "require");
         /** This will be set during calls to `getResolvedSignature` where services determines an apparent number of arguments greater than what is actually provided. */
@@ -49464,6 +49475,7 @@ var ts;
         var reverseMappedCache = new ts.Map();
         var inInferTypeForHomomorphicMappedType = false;
         var ambientModulesCache;
+        var nodeAmbientModulesCache;
         /**
          * List of every ambient module with a "*" wildcard.
          * Unlike other ambient modules, these can't be stored in `globals` because symbol tables only deal with exact matches.
@@ -49851,7 +49863,7 @@ var ts;
                 // Do not report an error when merging `var globalThis` with the built-in `globalThis`,
                 // as we will already report a "Declaration name conflicts..." error, and this error
                 // won't make much sense.
-                if (target !== globalThisSymbol) {
+                if (target !== globalThisSymbol && target !== nodeGlobalThisSymbol) {
                     error(source.declarations && ts.getNameOfDeclaration(source.declarations[0]), ts.Diagnostics.Cannot_augment_module_0_with_value_exports_because_it_resolves_to_a_non_module_entity, symbolToString(target));
                 }
             }
@@ -49950,7 +49962,7 @@ var ts;
                 return;
             }
             if (ts.isGlobalScopeAugmentation(moduleAugmentation)) {
-                mergeSymbolTable(globals, moduleAugmentation.symbol.exports);
+                denoContext.mergeGlobalSymbolTable(moduleAugmentation, moduleAugmentation.symbol.exports);
             }
             else {
                 // find a module that about to be augmented
@@ -50631,7 +50643,12 @@ var ts;
                     }
                 }
                 if (!excludeGlobals) {
-                    result = lookup(globals, name, meaning);
+                    if (denoContext.hasNodeSourceFile(lastLocation)) {
+                        result = lookup(nodeGlobals, name, meaning);
+                    }
+                    if (!result) {
+                        result = lookup(globals, name, meaning);
+                    }
                 }
             }
             if (!result) {
@@ -51888,6 +51905,24 @@ var ts;
                 : undefined;
         }
         function resolveExternalModule(location, moduleReference, moduleNotFoundError, errorNode, isForAugmentation) {
+            var _a;
+            if (isForAugmentation === void 0) { isForAugmentation = false; }
+            var result = resolveExternalModuleInner(location, moduleReference, moduleNotFoundError, errorNode, isForAugmentation);
+            // deno: attempt to resolve an npm package reference to its bare specifier w/ path ambient module
+            // when not found and the symbol has zero exports
+            if (moduleReference.startsWith("npm:") && (result == null || ((_a = result === null || result === void 0 ? void 0 : result.exports) === null || _a === void 0 ? void 0 : _a.size) === 0)) {
+                var npmPackageRef = ts.deno.tryParseNpmPackageReference(moduleReference);
+                if (npmPackageRef) {
+                    var bareSpecifier = npmPackageRef.name + (npmPackageRef.subPath == null ? "" : "/" + npmPackageRef.subPath);
+                    var ambientModule = tryFindAmbientModule(bareSpecifier, /*withAugmentations*/ true);
+                    if (ambientModule) {
+                        return ambientModule;
+                    }
+                }
+            }
+            return result;
+        }
+        function resolveExternalModuleInner(location, moduleReference, moduleNotFoundError, errorNode, isForAugmentation) {
             var _a, _b, _c, _d, _e, _f, _g, _h;
             if (isForAugmentation === void 0) { isForAugmentation = false; }
             if (ts.startsWith(moduleReference, "@types/")) {
@@ -52630,6 +52665,12 @@ var ts;
                 if (typeof state_2 === "object")
                     return state_2.value;
             }
+            if (denoContext.hasNodeSourceFile(enclosingDeclaration)) {
+                result = callback(nodeGlobals, /*ignoreQualification*/ undefined, /*isLocalNameLookup*/ true);
+                if (result) {
+                    return result;
+                }
+            }
             return callback(globals, /*ignoreQualification*/ undefined, /*isLocalNameLookup*/ true);
         }
         function getQualifiedLeftMeaning(rightMeaning) {
@@ -52713,7 +52754,11 @@ var ts;
                     }
                 });
                 // If there's no result and we're looking at the global symbol table, treat `globalThis` like an alias and try to lookup thru that
-                return result || (symbols === globals ? getCandidateListForSymbol(globalThisSymbol, globalThisSymbol, ignoreQualification) : undefined);
+                if (result) {
+                    return result;
+                }
+                var globalSymbol = symbols === nodeGlobals ? nodeGlobalThisSymbol : symbols === globals ? globalThisSymbol : undefined;
+                return globalSymbol != null ? getCandidateListForSymbol(globalSymbol, globalSymbol, ignoreQualification) : undefined;
             }
             function getCandidateListForSymbol(symbolFromSymbolTable, resolvedImportedSymbol, ignoreQualification) {
                 if (isAccessible(symbolFromSymbolTable, resolvedImportedSymbol, ignoreQualification)) {
@@ -59159,7 +59204,7 @@ var ts;
             var indexInfos;
             if (symbol.exports) {
                 members = getExportsOfSymbol(symbol);
-                if (symbol === globalThisSymbol) {
+                if (symbol === globalThisSymbol || symbol === nodeGlobalThisSymbol) {
                     var varsOnly_1 = new ts.Map();
                     members.forEach(function (p) {
                         var _a;
@@ -60321,7 +60366,7 @@ var ts;
             if (ts.isExternalModuleNameRelative(moduleName)) {
                 return undefined;
             }
-            var symbol = getSymbol(globals, '"' + moduleName + '"', 512 /* SymbolFlags.ValueModule */);
+            var symbol = getSymbol(denoContext.combinedGlobals, '"' + moduleName + '"', 512 /* SymbolFlags.ValueModule */);
             // merged symbol is module declaration symbol combined with all augmentations
             return symbol && withAugmentations ? getMergedSymbol(symbol) : symbol;
         }
@@ -62986,6 +63031,10 @@ var ts;
                         }
                     }
                     if (objectType.symbol === globalThisSymbol && propName !== undefined && globalThisSymbol.exports.has(propName) && (globalThisSymbol.exports.get(propName).flags & 418 /* SymbolFlags.BlockScoped */)) {
+                        error(accessExpression, ts.Diagnostics.Property_0_does_not_exist_on_type_1, ts.unescapeLeadingUnderscores(propName), typeToString(objectType));
+                    }
+                    // deno: ensure condition and body match the above
+                    else if (objectType.symbol === nodeGlobalThisSymbol && propName !== undefined && nodeGlobalThisSymbol.exports.has(propName) && (nodeGlobalThisSymbol.exports.get(propName).flags & 418 /* SymbolFlags.BlockScoped */)) {
                         error(accessExpression, ts.Diagnostics.Property_0_does_not_exist_on_type_1, ts.unescapeLeadingUnderscores(propName), typeToString(objectType));
                     }
                     else if (noImplicitAny && !compilerOptions.suppressImplicitAnyIndexErrors && !(accessFlags & 128 /* AccessFlags.SuppressNoImplicitAnyError */)) {
@@ -71860,7 +71909,7 @@ var ts;
                 if (type.flags & 1048576 /* TypeFlags.Union */
                     || type.flags & 524288 /* TypeFlags.Object */ && declaredType !== type && !(declaredType === unknownType && isEmptyAnonymousObjectType(type))
                     || ts.isThisTypeParameter(type)
-                    || type.flags & 2097152 /* TypeFlags.Intersection */ && ts.every(type.types, function (t) { return t.symbol !== globalThisSymbol; })) {
+                    || type.flags & 2097152 /* TypeFlags.Intersection */ && ts.every(type.types, function (t) { return t.symbol !== globalThisSymbol && t.symbol !== nodeGlobalThisSymbol; })) {
                     return filterType(type, function (t) { return isTypePresencePossible(t, name, assumeTrue); });
                 }
                 return type;
@@ -73019,6 +73068,9 @@ var ts;
                     return undefinedType;
                 }
                 else if (includeGlobalThis) {
+                    if (denoContext.hasNodeSourceFile(container)) {
+                        return getTypeOfSymbol(nodeGlobalThisSymbol);
+                    }
                     return getTypeOfSymbol(globalThisSymbol);
                 }
             }
@@ -75690,6 +75742,11 @@ var ts;
                         }
                         return anyType;
                     }
+                    // deno: ensure condition matches above
+                    if (leftType.symbol === nodeGlobalThisSymbol) {
+                        // deno: don't bother with errors like above for simplicity
+                        return anyType;
+                    }
                     if (right.escapedText && !checkAndReportErrorForExtendingInterface(node)) {
                         reportNonexistentProperty(right, ts.isThisTypeParameter(leftType) ? apparentType : leftType, isUncheckedJS);
                     }
@@ -75997,7 +76054,7 @@ var ts;
                 if (symbol)
                     return symbol;
                 var candidates;
-                if (symbols === globals) {
+                if (symbols === globals || symbols === nodeGlobals) {
                     var primitives = ts.mapDefined(["string", "number", "boolean", "object", "bigint", "symbol"], function (s) { return symbols.has((s.charAt(0).toUpperCase() + s.slice(1)))
                         ? createSymbol(524288 /* SymbolFlags.TypeAlias */, s)
                         : undefined; });
@@ -86656,7 +86713,7 @@ var ts;
                 // find immediate value referenced by exported name (SymbolFlags.Alias is set so we don't chase down aliases)
                 var symbol = resolveName(exportedName, exportedName.escapedText, 111551 /* SymbolFlags.Value */ | 788968 /* SymbolFlags.Type */ | 1920 /* SymbolFlags.Namespace */ | 2097152 /* SymbolFlags.Alias */, 
                 /*nameNotFoundMessage*/ undefined, /*nameArg*/ undefined, /*isUse*/ true);
-                if (symbol && (symbol === undefinedSymbol || symbol === globalThisSymbol || symbol.declarations && isGlobalSourceFile(getDeclarationContainer(symbol.declarations[0])))) {
+                if (symbol && (symbol === undefinedSymbol || symbol === globalThisSymbol || symbol === nodeGlobalThisSymbol || symbol.declarations && isGlobalSourceFile(getDeclarationContainer(symbol.declarations[0])))) {
                     error(exportedName, ts.Diagnostics.Cannot_export_0_Only_local_declarations_can_be_exported_from_a_module, ts.idText(exportedName));
                 }
                 else {
@@ -87342,6 +87399,9 @@ var ts;
                     }
                     isStaticSymbol = ts.isStatic(location);
                     location = location.parent;
+                }
+                if (denoContext.hasNodeSourceFile(location)) {
+                    copySymbols(nodeGlobals, meaning);
                 }
                 copySymbols(globals, meaning);
             }
@@ -88717,25 +88777,24 @@ var ts;
             amalgamatedDuplicates = new ts.Map();
             // Initialize global symbol table
             var augmentations;
-            for (var _b = 0, _c = host.getSourceFiles(); _b < _c.length; _b++) {
-                var file = _c[_b];
+            var _loop_35 = function (file) {
                 if (file.redirectInfo) {
-                    continue;
+                    return "continue";
                 }
                 if (!ts.isExternalOrCommonJsModule(file)) {
                     // It is an error for a non-external-module (i.e. script) to declare its own `globalThis`.
                     // We can't use `builtinGlobals` for this due to synthetic expando-namespace generation in JS files.
                     var fileGlobalThisSymbol = file.locals.get("globalThis");
                     if (fileGlobalThisSymbol === null || fileGlobalThisSymbol === void 0 ? void 0 : fileGlobalThisSymbol.declarations) {
-                        for (var _d = 0, _e = fileGlobalThisSymbol.declarations; _d < _e.length; _d++) {
-                            var declaration = _e[_d];
+                        for (var _h = 0, _j = fileGlobalThisSymbol.declarations; _h < _j.length; _h++) {
+                            var declaration = _j[_h];
                             diagnostics.add(ts.createDiagnosticForNode(declaration, ts.Diagnostics.Declaration_name_conflicts_with_built_in_global_identifier_0, "globalThis"));
                         }
                     }
-                    mergeSymbolTable(globals, file.locals);
+                    denoContext.mergeGlobalSymbolTable(file, file.locals);
                 }
                 if (file.jsGlobalAugmentations) {
-                    mergeSymbolTable(globals, file.jsGlobalAugmentations);
+                    denoContext.mergeGlobalSymbolTable(file, file.jsGlobalAugmentations);
                 }
                 if (file.patternAmbientModules && file.patternAmbientModules.length) {
                     patternAmbientModules = ts.concatenate(patternAmbientModules, file.patternAmbientModules);
@@ -88746,12 +88805,18 @@ var ts;
                 if (file.symbol && file.symbol.globalExports) {
                     // Merge in UMD exports with first-in-wins semantics (see #9771)
                     var source = file.symbol.globalExports;
+                    var isNodeFile_1 = denoContext.hasNodeSourceFile(file);
                     source.forEach(function (sourceSymbol, id) {
-                        if (!globals.has(id)) {
-                            globals.set(id, sourceSymbol);
+                        var envGlobals = isNodeFile_1 ? denoContext.getGlobalsForName(id) : globals;
+                        if (!envGlobals.has(id)) {
+                            envGlobals.set(id, sourceSymbol);
                         }
                     });
                 }
+            };
+            for (var _b = 0, _c = host.getSourceFiles(); _b < _c.length; _b++) {
+                var file = _c[_b];
+                _loop_35(file);
             }
             // We do global augmentations separately from module augmentations (and before creating global types) because they
             //  1. Affect global types. We won't have the correct global types until global augmentations are merged. Also,
@@ -88762,10 +88827,10 @@ var ts;
             if (augmentations) {
                 // merge _global_ module augmentations.
                 // this needs to be done after global symbol table is initialized to make sure that all ambient modules are indexed
-                for (var _f = 0, augmentations_1 = augmentations; _f < augmentations_1.length; _f++) {
-                    var list = augmentations_1[_f];
-                    for (var _g = 0, list_1 = list; _g < list_1.length; _g++) {
-                        var augmentation = list_1[_g];
+                for (var _d = 0, augmentations_1 = augmentations; _d < augmentations_1.length; _d++) {
+                    var list = augmentations_1[_d];
+                    for (var _e = 0, list_1 = list; _e < list_1.length; _e++) {
+                        var augmentation = list_1[_e];
                         if (!ts.isGlobalScopeAugmentation(augmentation.parent))
                             continue;
                         mergeModuleAugmentation(augmentation);
@@ -88778,6 +88843,7 @@ var ts;
             getSymbolLinks(argumentsSymbol).type = getGlobalType("IArguments", /*arity*/ 0, /*reportErrors*/ true);
             getSymbolLinks(unknownSymbol).type = errorType;
             getSymbolLinks(globalThisSymbol).type = createObjectType(16 /* ObjectFlags.Anonymous */, globalThisSymbol);
+            getSymbolLinks(nodeGlobalThisSymbol).type = createObjectType(16 /* ObjectFlags.Anonymous */, nodeGlobalThisSymbol);
             // Initialize special types
             globalArrayType = getGlobalType("Array", /*arity*/ 1, /*reportErrors*/ true);
             globalObjectType = getGlobalType("Object", /*arity*/ 0, /*reportErrors*/ true);
@@ -88800,10 +88866,10 @@ var ts;
             if (augmentations) {
                 // merge _nonglobal_ module augmentations.
                 // this needs to be done after global symbol table is initialized to make sure that all ambient modules are indexed
-                for (var _h = 0, augmentations_2 = augmentations; _h < augmentations_2.length; _h++) {
-                    var list = augmentations_2[_h];
-                    for (var _j = 0, list_2 = list; _j < list_2.length; _j++) {
-                        var augmentation = list_2[_j];
+                for (var _f = 0, augmentations_2 = augmentations; _f < augmentations_2.length; _f++) {
+                    var list = augmentations_2[_f];
+                    for (var _g = 0, list_2 = list; _g < list_2.length; _g++) {
+                        var augmentation = list_2[_g];
                         if (ts.isGlobalScopeAugmentation(augmentation.parent))
                             continue;
                         mergeModuleAugmentation(augmentation);
@@ -90373,17 +90439,30 @@ var ts;
             }
             return false;
         }
-        function getAmbientModules() {
-            if (!ambientModulesCache) {
-                ambientModulesCache = [];
-                globals.forEach(function (global, sym) {
+        function getAmbientModules(sourceFile) {
+            var isNode = denoContext.hasNodeSourceFile(sourceFile);
+            if (isNode) {
+                if (!nodeAmbientModulesCache) {
+                    nodeAmbientModulesCache = getAmbientModules(denoContext.combinedGlobals);
+                }
+                return nodeAmbientModulesCache;
+            }
+            else {
+                if (!ambientModulesCache) {
+                    ambientModulesCache = getAmbientModules(globals);
+                }
+                return ambientModulesCache;
+            }
+            function getAmbientModules(envGlobals) {
+                var cache = [];
+                envGlobals.forEach(function (global, sym) {
                     // No need to `unescapeLeadingUnderscores`, an escaped symbol is never an ambient module.
                     if (ambientModuleSymbolRegex.test(sym)) {
-                        ambientModulesCache.push(global);
+                        cache.push(global);
                     }
                 });
+                return cache;
             }
-            return ambientModulesCache;
         }
         function checkGrammarImportClause(node) {
             var _a;
@@ -90561,6 +90640,234 @@ var ts;
         return !!(s.flags & 2 /* SignatureFlags.HasLiteralTypes */);
     }
     ts.signatureHasLiteralTypes = signatureHasLiteralTypes;
+})(ts || (ts = {}));
+/* @internal */
+var ts;
+(function (ts) {
+    var deno;
+    (function (deno) {
+        var isNodeSourceFile = function () { return false; };
+        function setIsNodeSourceFileCallback(callback) {
+            isNodeSourceFile = callback;
+        }
+        deno.setIsNodeSourceFileCallback = setIsNodeSourceFileCallback;
+        // When upgrading:
+        // 1. Inspect all usages of "globals" and "globalThisSymbol" in checker.ts
+        //    - Beware that `globalThisType` might refer to the global `this` type
+        //      and not the global `globalThis` type
+        // 2. Inspect the types in @types/node for anything that might need to go below
+        //    as well.
+        var nodeOnlyGlobalNames = new ts.Set([
+            "NodeRequire",
+            "RequireResolve",
+            "RequireResolve",
+            "process",
+            "console",
+            "__filename",
+            "__dirname",
+            "require",
+            "module",
+            "exports",
+            "gc",
+            "BufferEncoding",
+            "BufferConstructor",
+            "WithImplicitCoercion",
+            "Buffer",
+            "Console",
+            "ImportMeta",
+            "setTimeout",
+            "setInterval",
+            "setImmediate",
+            "Global",
+            "AbortController",
+            "AbortSignal",
+            "Blob",
+            "BroadcastChannel",
+            "MessageChannel",
+            "MessagePort",
+            "Event",
+            "EventTarget",
+            "performance",
+            "TextDecoder",
+            "TextEncoder",
+            "URL",
+            "URLSearchParams",
+        ]);
+        function createDenoForkContext(_a) {
+            var mergeSymbol = _a.mergeSymbol, globals = _a.globals, nodeGlobals = _a.nodeGlobals, ambientModuleSymbolRegex = _a.ambientModuleSymbolRegex;
+            return {
+                hasNodeSourceFile: hasNodeSourceFile,
+                getGlobalsForName: getGlobalsForName,
+                mergeGlobalSymbolTable: mergeGlobalSymbolTable,
+                combinedGlobals: createNodeGlobalsSymbolTable(),
+            };
+            function hasNodeSourceFile(node) {
+                if (!node)
+                    return false;
+                var sourceFile = ts.getSourceFileOfNode(node);
+                return isNodeSourceFile(sourceFile);
+            }
+            function getGlobalsForName(id) {
+                // Node ambient modules are only accessible in the node code,
+                // so put them on the node globals
+                if (ambientModuleSymbolRegex.test(id))
+                    return nodeGlobals;
+                return nodeOnlyGlobalNames.has(id) ? nodeGlobals : globals;
+            }
+            function mergeGlobalSymbolTable(node, source, unidirectional) {
+                if (unidirectional === void 0) { unidirectional = false; }
+                var sourceFile = ts.getSourceFileOfNode(node);
+                var isNodeFile = hasNodeSourceFile(sourceFile);
+                source.forEach(function (sourceSymbol, id) {
+                    var target = isNodeFile ? getGlobalsForName(id) : globals;
+                    var targetSymbol = target.get(id);
+                    target.set(id, targetSymbol ? mergeSymbol(targetSymbol, sourceSymbol, unidirectional) : sourceSymbol);
+                });
+            }
+            function createNodeGlobalsSymbolTable() {
+                return new Proxy(globals, {
+                    get: function (target, prop, receiver) {
+                        if (prop === "get") {
+                            return function (key) {
+                                var _a;
+                                return (_a = nodeGlobals.get(key)) !== null && _a !== void 0 ? _a : globals.get(key);
+                            };
+                        }
+                        else if (prop === "has") {
+                            return function (key) {
+                                return nodeGlobals.has(key) || globals.has(key);
+                            };
+                        }
+                        else if (prop === "size") {
+                            var i_2 = 0;
+                            forEachEntry(function () {
+                                i_2++;
+                            });
+                            return i_2;
+                        }
+                        else if (prop === "forEach") {
+                            return function (action) {
+                                forEachEntry(function (_a) {
+                                    var key = _a[0], value = _a[1];
+                                    action(value, key);
+                                });
+                            };
+                        }
+                        else if (prop === "entries") {
+                            return function () {
+                                return getEntries(function (kv) { return kv; });
+                            };
+                        }
+                        else if (prop === "keys") {
+                            return function () {
+                                return getEntries(function (kv) { return kv[0]; });
+                            };
+                        }
+                        else if (prop === "values") {
+                            return function () {
+                                return getEntries(function (kv) { return kv[1]; });
+                            };
+                        }
+                        else if (prop === Symbol.iterator) {
+                            return function () {
+                                // Need to convert this to an array since typescript targets ES5
+                                // and providing back the iterator won't work here. I don't want
+                                // to change the target to ES6 because I'm not sure if that would
+                                // surface any issues.
+                                return ts.arrayFrom(getEntries(function (kv) { return kv; }))[Symbol.iterator]();
+                            };
+                        }
+                        else {
+                            var value_3 = target[prop];
+                            if (value_3 instanceof Function) {
+                                return function () {
+                                    var args = [];
+                                    for (var _i = 0; _i < arguments.length; _i++) {
+                                        args[_i] = arguments[_i];
+                                    }
+                                    return value_3.apply(this === receiver ? target : this, args);
+                                };
+                            }
+                            return value_3;
+                        }
+                    },
+                });
+                function forEachEntry(action) {
+                    var iterator = getEntries(function (entry) {
+                        action(entry);
+                    });
+                    // drain the iterator to do the action
+                    while (!iterator.next().done) { }
+                }
+                function getEntries(transform) {
+                    var foundKeys, _i, _a, entries, next;
+                    return __generator(this, function (_b) {
+                        switch (_b.label) {
+                            case 0:
+                                foundKeys = new ts.Set();
+                                _i = 0, _a = [nodeGlobals.entries(), globals.entries()];
+                                _b.label = 1;
+                            case 1:
+                                if (!(_i < _a.length)) return [3 /*break*/, 6];
+                                entries = _a[_i];
+                                next = entries.next();
+                                _b.label = 2;
+                            case 2:
+                                if (!!next.done) return [3 /*break*/, 5];
+                                if (!!foundKeys.has(next.value[0])) return [3 /*break*/, 4];
+                                return [4 /*yield*/, transform(next.value)];
+                            case 3:
+                                _b.sent();
+                                foundKeys.add(next.value[0]);
+                                _b.label = 4;
+                            case 4:
+                                next = entries.next();
+                                return [3 /*break*/, 2];
+                            case 5:
+                                _i++;
+                                return [3 /*break*/, 1];
+                            case 6: return [2 /*return*/];
+                        }
+                    });
+                }
+            }
+        }
+        deno.createDenoForkContext = createDenoForkContext;
+        function tryParseNpmPackageReference(text) {
+            try {
+                return parseNpmPackageReference(text);
+            }
+            catch (_a) {
+                return undefined;
+            }
+        }
+        deno.tryParseNpmPackageReference = tryParseNpmPackageReference;
+        function parseNpmPackageReference(text) {
+            if (!text.startsWith("npm:")) {
+                throw new Error("Not an npm specifier: ".concat(text));
+            }
+            text = text.replace(/^npm:/, "");
+            var parts = text.split("/");
+            var namePartLen = text.startsWith("@") ? 2 : 1;
+            if (parts.length < namePartLen) {
+                throw new Error("Not a valid package: ".concat(text));
+            }
+            var nameParts = parts.slice(0, namePartLen);
+            var lastNamePart = nameParts.at(-1);
+            var lastAtIndex = lastNamePart.lastIndexOf("@");
+            var versionReq = undefined;
+            if (lastAtIndex > 0) {
+                versionReq = lastNamePart.substring(lastAtIndex + 1);
+                nameParts[nameParts.length - 1] = lastNamePart.substring(0, lastAtIndex);
+            }
+            return {
+                name: nameParts.join("/"),
+                versionReq: versionReq,
+                subPath: parts.length > nameParts.length ? parts.slice(nameParts.length).join("/") : undefined,
+            };
+        }
+        deno.parseNpmPackageReference = parseNpmPackageReference;
+    })(deno = ts.deno || (ts.deno = {}));
 })(ts || (ts = {}));
 var ts;
 (function (ts) {
@@ -121271,7 +121578,7 @@ var ts;
                 }
             }
             // From ambient modules
-            for (var _f = 0, _g = program.getTypeChecker().getAmbientModules(); _f < _g.length; _f++) {
+            for (var _f = 0, _g = program.getTypeChecker().getAmbientModules(sourceFile); _f < _g.length; _f++) {
                 var ambientModule = _g[_f];
                 if (ambientModule.declarations && ambientModule.declarations.length > 1) {
                     addReferenceFromAmbientModule(ambientModule);
@@ -124123,7 +124430,7 @@ var ts;
             });
             // Sort by paths closest to importing file Name directory
             var sortedPaths = [];
-            var _loop_35 = function (directory) {
+            var _loop_36 = function (directory) {
                 var directoryStart = ts.ensureTrailingDirectorySeparator(directory);
                 var pathsInDirectory;
                 allFileNames.forEach(function (_a, fileName) {
@@ -124147,7 +124454,7 @@ var ts;
             };
             var out_directory_1;
             for (var directory = ts.getDirectoryPath(importingFileName); allFileNames.size !== 0;) {
-                var state_11 = _loop_35(directory);
+                var state_11 = _loop_36(directory);
                 directory = out_directory_1;
                 if (state_11 === "break")
                     break;
@@ -124218,7 +124525,7 @@ var ts;
         }
         function tryGetModuleNameFromPaths(relativeToBaseUrl, paths, allowedEndings, host, compilerOptions) {
             for (var key in paths) {
-                var _loop_36 = function (patternText_1) {
+                var _loop_37 = function (patternText_1) {
                     var pattern = ts.normalizePath(patternText_1);
                     var indexOfStar = pattern.indexOf("*");
                     // In module resolution, if `pattern` itself has an extension, a file with that extension is looked up directly,
@@ -124285,7 +124592,7 @@ var ts;
                 };
                 for (var _i = 0, _a = paths[key]; _i < _a.length; _i++) {
                     var patternText_1 = _a[_i];
-                    var state_12 = _loop_36(patternText_1);
+                    var state_12 = _loop_37(patternText_1);
                     if (typeof state_12 === "object")
                         return state_12.value;
                 }
@@ -137638,7 +137945,8 @@ var ts;
             if (globalSymbol && checker.getTypeOfSymbolAtLocation(globalSymbol, sourceFile) === type) {
                 return true;
             }
-            var globalThisSymbol = checker.resolveName("globalThis", /*location*/ undefined, 111551 /* SymbolFlags.Value */, /*excludeGlobals*/ false);
+            // deno: provide sourceFile so that it can figure out if it's a node or deno globalThis
+            var globalThisSymbol = checker.resolveName("globalThis", /*location*/ sourceFile, 111551 /* SymbolFlags.Value */, /*excludeGlobals*/ false);
             if (globalThisSymbol && checker.getTypeOfSymbolAtLocation(globalThisSymbol, sourceFile) === type) {
                 return true;
             }
