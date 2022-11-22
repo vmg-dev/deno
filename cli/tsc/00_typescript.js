@@ -90846,7 +90846,7 @@ var ts;
             if (!text.startsWith("npm:")) {
                 throw new Error("Not an npm specifier: ".concat(text));
             }
-            text = text.replace(/^npm:/, "");
+            text = text.replace(/^npm:\/?/, "");
             var parts = text.split("/");
             var namePartLen = text.startsWith("@") ? 2 : 1;
             if (parts.length < namePartLen) {
@@ -90860,8 +90860,12 @@ var ts;
                 versionReq = lastNamePart.substring(lastAtIndex + 1);
                 nameParts[nameParts.length - 1] = lastNamePart.substring(0, lastAtIndex);
             }
+            var name = nameParts.join("/");
+            if (name.length === 0) {
+                throw new Error("Npm specifier did not have a name: ".concat(text));
+            }
             return {
-                name: nameParts.join("/"),
+                name: name,
                 versionReq: versionReq,
                 subPath: parts.length > nameParts.length ? parts.slice(nameParts.length).join("/") : undefined,
             };
