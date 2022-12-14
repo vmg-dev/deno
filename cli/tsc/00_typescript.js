@@ -99,7 +99,7 @@ var ts;
     // The following is baselined as a literal template type without intervention
     /** The version of the TypeScript compiler release */
     // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-    ts.version = "".concat(ts.versionMajorMinor, ".3");
+    ts.version = "".concat(ts.versionMajorMinor, ".4");
     /* @internal */
     var Comparison;
     (function (Comparison) {
@@ -68946,7 +68946,10 @@ var ts;
             return !!(type.flags & 109440 /* TypeFlags.Unit */);
         }
         function isUnitLikeType(type) {
-            return isUnitType(getBaseConstraintOrType(type));
+            // Intersections that reduce to 'never' (e.g. 'T & null' where 'T extends {}') are not unit types.
+            var t = getBaseConstraintOrType(type);
+            // Scan intersections such that tagged literal types are considered unit types.
+            return t.flags & 2097152 /* TypeFlags.Intersection */ ? ts.some(t.types, isUnitType) : isUnitType(t);
         }
         function extractUnitType(type) {
             return type.flags & 2097152 /* TypeFlags.Intersection */ ? ts.find(type.types, isUnitType) || type : type;
@@ -79134,11 +79137,11 @@ var ts;
         }
         function checkSatisfiesExpression(node) {
             checkSourceElement(node.type);
+            var exprType = checkExpression(node.expression);
             var targetType = getTypeFromTypeNode(node.type);
             if (isErrorType(targetType)) {
                 return targetType;
             }
-            var exprType = checkExpression(node.expression);
             checkTypeAssignableToAndOptionallyElaborate(exprType, targetType, node.type, node.expression, ts.Diagnostics.Type_0_does_not_satisfy_the_expected_type_1);
             return exprType;
         }
@@ -92279,8 +92282,8 @@ var ts;
             return context.factory.updateEnumMember(node, nodeVisitor(node.name, visitor, ts.isPropertyName), nodeVisitor(node.initializer, visitor, ts.isExpression));
         },
         // Top-level nodes
-        _a[308 /* SyntaxKind.SourceFile */] = function visitEachChildOfSourceFile(node, visitor, context, nodesVisitor, _nodeVisitor, _tokenVisitor) {
-            return context.factory.updateSourceFile(node, visitLexicalEnvironment(node.statements, visitor, context, /*start*/ undefined, /*ensureUseStrict*/ undefined, nodesVisitor));
+        _a[308 /* SyntaxKind.SourceFile */] = function visitEachChildOfSourceFile(node, visitor, context, _nodesVisitor, _nodeVisitor, _tokenVisitor) {
+            return context.factory.updateSourceFile(node, visitLexicalEnvironment(node.statements, visitor, context));
         },
         // Transformation nodes
         _a[353 /* SyntaxKind.PartiallyEmittedExpression */] = function visitEachChildOfPartiallyEmittedExpression(node, visitor, context, _nodesVisitor, nodeVisitor, _tokenVisitor) {
@@ -126517,12 +126520,13 @@ var ts;
         if (directoryStructureHost === void 0) { directoryStructureHost = host; }
         var useCaseSensitiveFileNames = host.useCaseSensitiveFileNames();
         var hostGetNewLine = ts.memoize(function () { return host.getNewLine(); });
-        return {
+        var compilerHost = {
             getSourceFile: function (fileName, languageVersionOrOptions, onError) {
                 var text;
                 try {
                     ts.performance.mark("beforeIORead");
-                    text = host.readFile(fileName, getCompilerOptions().charset);
+                    var encoding = getCompilerOptions().charset;
+                    text = !encoding ? compilerHost.readFile(fileName) : host.readFile(fileName, encoding);
                     ts.performance.mark("afterIORead");
                     ts.performance.measure("I/O Read", "beforeIORead", "afterIORead");
                 }
@@ -126553,6 +126557,7 @@ var ts;
             disableUseFileVersionAsSignature: host.disableUseFileVersionAsSignature,
             storeFilesChangingSignatureDuringEmit: host.storeFilesChangingSignatureDuringEmit,
         };
+        return compilerHost;
         function writeFile(fileName, text, writeByteOrderMark, onError) {
             try {
                 ts.performance.mark("beforeIOWrite");
@@ -126571,9 +126576,9 @@ var ts;
         }
     }
     ts.createCompilerHostFromProgramHost = createCompilerHostFromProgramHost;
-    function setGetSourceFileAsHashVersioned(compilerHost, host) {
+    function setGetSourceFileAsHashVersioned(compilerHost) {
         var originalGetSourceFile = compilerHost.getSourceFile;
-        var computeHash = ts.maybeBind(host, host.createHash) || ts.generateDjb2Hash;
+        var computeHash = ts.maybeBind(compilerHost, compilerHost.createHash) || ts.generateDjb2Hash;
         compilerHost.getSourceFile = function () {
             var args = [];
             for (var _i = 0; _i < arguments.length; _i++) {
@@ -126705,7 +126710,7 @@ var ts;
         host.createHash = ts.maybeBind(system, system.createHash);
         host.disableUseFileVersionAsSignature = system.disableUseFileVersionAsSignature;
         host.storeFilesChangingSignatureDuringEmit = system.storeFilesChangingSignatureDuringEmit;
-        ts.setGetSourceFileAsHashVersioned(host, system);
+        ts.setGetSourceFileAsHashVersioned(host);
         ts.changeCompilerHostLikeToUseCache(host, function (fileName) { return ts.toPath(fileName, host.getCurrentDirectory(), host.getCanonicalFileName); });
         return host;
     }
@@ -126791,7 +126796,7 @@ var ts;
             configFileWatcher = watchFile(configFileName, scheduleProgramReload, ts.PollingInterval.High, watchOptions, ts.WatchType.ConfigFile);
         }
         var compilerHost = ts.createCompilerHostFromProgramHost(host, function () { return compilerOptions; }, directoryStructureHost);
-        ts.setGetSourceFileAsHashVersioned(compilerHost, host);
+        ts.setGetSourceFileAsHashVersioned(compilerHost);
         // Members for CompilerHost
         var getNewSourceFile = compilerHost.getSourceFile;
         compilerHost.getSourceFile = function (fileName) {
@@ -126919,8 +126924,8 @@ var ts;
                 }
             }
             var hasInvalidatedResolutions = resolutionCache.createHasInvalidatedResolutions(customHasInvalidatedResolutions);
-            var _a = ts.changeCompilerHostLikeToUseCache(compilerHost, toPath), originalReadFile = _a.originalReadFile, originalFileExists = _a.originalFileExists, originalDirectoryExists = _a.originalDirectoryExists, originalCreateDirectory = _a.originalCreateDirectory, originalWriteFile = _a.originalWriteFile;
-            if (ts.isProgramUptoDate(getCurrentProgram(), rootFileNames, compilerOptions, getSourceVersion, function (fileName) { return compilerHost.fileExists(fileName); }, hasInvalidatedResolutions, hasChangedAutomaticTypeDirectiveNames, getParsedCommandLine, projectReferences)) {
+            var _a = ts.changeCompilerHostLikeToUseCache(compilerHost, toPath), originalReadFile = _a.originalReadFile, originalFileExists = _a.originalFileExists, originalDirectoryExists = _a.originalDirectoryExists, originalCreateDirectory = _a.originalCreateDirectory, originalWriteFile = _a.originalWriteFile, readFileWithCache = _a.readFileWithCache;
+            if (ts.isProgramUptoDate(getCurrentProgram(), rootFileNames, compilerOptions, function (path) { return getSourceVersion(path, readFileWithCache); }, function (fileName) { return compilerHost.fileExists(fileName); }, hasInvalidatedResolutions, hasChangedAutomaticTypeDirectiveNames, getParsedCommandLine, projectReferences)) {
                 if (hasChangedConfigFileParsingErrors) {
                     if (reportFileChangeDetectedOnCreateProgram) {
                         reportWatchDiagnostic(ts.Diagnostics.File_change_detected_Starting_incremental_compilation);
@@ -127059,9 +127064,15 @@ var ts;
                 }
             }
         }
-        function getSourceVersion(path) {
+        function getSourceVersion(path, readFileWithCache) {
             var hostSourceFile = sourceFilesCache.get(path);
-            return !hostSourceFile || !hostSourceFile.version ? undefined : hostSourceFile.version;
+            if (!hostSourceFile)
+                return undefined;
+            if (hostSourceFile.version)
+                return hostSourceFile.version;
+            // Read file and get new version
+            var text = readFileWithCache(path);
+            return text !== undefined ? (compilerHost.createHash || ts.generateDjb2Hash)(text) : undefined;
         }
         function onReleaseOldSourceFile(oldSourceFile, _oldOptions, hasSourceFileByPath) {
             var hostSourceFileInfo = sourceFilesCache.get(oldSourceFile.resolvedPath);
@@ -127555,7 +127566,7 @@ var ts;
         // State of the solution
         var baseCompilerOptions = getCompilerOptionsOfBuildOptions(options);
         var compilerHost = ts.createCompilerHostFromProgramHost(host, function () { return state.projectCompilerOptions; });
-        ts.setGetSourceFileAsHashVersioned(compilerHost, host);
+        ts.setGetSourceFileAsHashVersioned(compilerHost);
         compilerHost.getParsedCommandLine = function (fileName) { return parseConfigFile(state, fileName, toResolvedConfigFilePath(state, fileName)); };
         compilerHost.resolveModuleNames = ts.maybeBind(host, host.resolveModuleNames);
         compilerHost.resolveTypeReferenceDirectives = ts.maybeBind(host, host.resolveTypeReferenceDirectives);
@@ -128588,7 +128599,7 @@ var ts;
                         buildInfoVersionMap = ts.getBuildInfoFileVersionMap(buildInfoProgram, buildInfoPath, host);
                     version_3 = buildInfoVersionMap.get(toPath(state, inputFile));
                     var text = version_3 ? state.readFileWithCache(inputFile) : undefined;
-                    currentVersion = text && (host.createHash || ts.generateDjb2Hash)(text);
+                    currentVersion = text !== undefined ? (host.createHash || ts.generateDjb2Hash)(text) : undefined;
                     if (version_3 && version_3 === currentVersion)
                         pseudoInputUpToDate = true;
                 }
