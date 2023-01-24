@@ -91389,10 +91389,15 @@ var ts;
     var deno;
     (function (deno) {
         var isNodeSourceFile = function () { return false; };
+        var nodeBuiltInModuleNames = new ts.Set();
         function setIsNodeSourceFileCallback(callback) {
             isNodeSourceFile = callback;
         }
         deno.setIsNodeSourceFileCallback = setIsNodeSourceFileCallback;
+        function setNodeBuiltInModuleNames(names) {
+            nodeBuiltInModuleNames = new ts.Set(names);
+        }
+        deno.setNodeBuiltInModuleNames = setNodeBuiltInModuleNames;
         // When upgrading:
         // 1. Inspect all usages of "globals" and "globalThisSymbol" in checker.ts
         //    - Beware that `globalThisType` might refer to the global `this` type
@@ -91452,8 +91457,16 @@ var ts;
             function getGlobalsForName(id) {
                 // Node ambient modules are only accessible in the node code,
                 // so put them on the node globals
-                if (ambientModuleSymbolRegex.test(id))
+                if (ambientModuleSymbolRegex.test(id)) {
+                    if (id.startsWith('"node:')) {
+                        // check if it's a node specifier that we support
+                        var name = id.slice(6, -1);
+                        if (nodeBuiltInModuleNames.has(name)) {
+                            return globals;
+                        }
+                    }
                     return nodeGlobals;
+                }
                 return nodeOnlyGlobalNames.has(id) ? nodeGlobals : globals;
             }
             function mergeGlobalSymbolTable(node, source, unidirectional) {
