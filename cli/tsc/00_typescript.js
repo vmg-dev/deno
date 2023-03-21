@@ -38066,6 +38066,7 @@ ${lanes.join("\n")}
           name: "allowImportingTsExtensions",
           type: "boolean",
           affectsSemanticDiagnostics: true,
+          affectsBuildInfo: true,
           category: Diagnostics.Modules,
           description: Diagnostics.Allow_imports_to_include_TypeScript_file_extensions_Requires_moduleResolution_bundler_and_either_noEmit_or_emitDeclarationOnly_to_be_set,
           defaultValueDescription: false
@@ -120426,7 +120427,7 @@ ${lanes.join("\n")}
       const { optionsNameMap } = getOptionsNameMap();
       for (const name of getOwnKeys(options).sort(compareStringsCaseSensitive)) {
         const optionInfo = optionsNameMap.get(name.toLowerCase());
-        if (optionInfo == null ? void 0 : optionInfo.affectsBuildInfo) {
+        if (optionInfo && (optionInfo.affectsBuildInfo || optionInfo.affectsSemanticDiagnostics)) {
           (result || (result = {}))[name] = convertToReusableCompilerOptionValue(
             optionInfo,
             options[name],
