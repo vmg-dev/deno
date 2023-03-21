@@ -16,7 +16,7 @@ and limitations under the License.
 
 /// <reference no-default-lib="true"/>
 
-/// <reference lib="es2017" />
+/// <reference lib="es2023" />
 /// <reference lib="dom" />
 /// <reference lib="webworker.importscripts" />
 /// <reference lib="scripthost" />

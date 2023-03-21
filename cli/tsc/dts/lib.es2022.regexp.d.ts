@@ -16,8 +16,24 @@ and limitations under the License.
 
 /// <reference no-default-lib="true"/>
 
-/// <reference lib="es2017" />
-/// <reference lib="dom" />
-/// <reference lib="webworker.importscripts" />
-/// <reference lib="scripthost" />
-/// <reference lib="dom.iterable" />
+interface RegExpMatchArray {
+    indices?: RegExpIndicesArray;
+}
+
+interface RegExpExecArray {
+    indices?: RegExpIndicesArray;
+}
+
+interface RegExpIndicesArray extends Array<[number, number]> {
+    groups?: {
+        [key: string]: [number, number];
+    };
+}
+
+interface RegExp {
+    /**
+     * Returns a Boolean value indicating the state of the hasIndices flag (d) used with with a regular expression.
+     * Default is false. Read-only.
+     */
+    readonly hasIndices: boolean;
+}
