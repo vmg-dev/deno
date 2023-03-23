@@ -128952,7 +128952,7 @@ ${lanes.join("\n")}
         // Adding or removing imports from node could change the outcome of that guess, so could change the suggestions list.
         typeAcquisitionEnabled && consumesNodeCoreModules(oldSourceFile) !== consumesNodeCoreModules(newSourceFile) || // Module agumentation and ambient module changes can add or remove exports available to be auto-imported.
         // Changes elsewhere in the file can change the *type* of an export in a module augmentation,
-        // but type info is gathered in getCompletionEntryDetails, which doesn’t use the cache.
+        // but type info is gathered in getCompletionEntryDetails, which doesn't use the cache.
         !arrayIsEqualTo(oldSourceFile.moduleAugmentations, newSourceFile.moduleAugmentations) || !ambientModuleDeclarationsAreEqual(oldSourceFile, newSourceFile)) {
           cache.clear();
           return true;
@@ -137732,7 +137732,7 @@ ${lanes.join("\n")}
   function symbolReferenceIsAlsoMissingAwait(reference, diagnostics, sourceFile, checker) {
     const errorNode = isPropertyAccessExpression(reference.parent) ? reference.parent.name : isBinaryExpression(reference.parent) ? reference.parent : reference;
     const diagnostic = find(diagnostics, (diagnostic2) => diagnostic2.start === errorNode.getStart(sourceFile) && diagnostic2.start + diagnostic2.length === errorNode.getEnd());
-    return diagnostic && contains(errorCodes3, diagnostic.code) || // A Promise is usually not correct in a binary expression (it’s not valid
+    return diagnostic && contains(errorCodes3, diagnostic.code) || // A Promise is usually not correct in a binary expression (it's not valid
     // in an arithmetic expression and an equality comparison seems unusual),
     // but if the other side of the binary expression has an error, the side
     // is typed `any` which will squash the error that would identify this
@@ -153491,7 +153491,7 @@ ${lanes.join("\n")}
              */
             this.markSeenReExportRHS = nodeSeenTracker();
             this.symbolIdToReferences = [];
-            // Source file ID → symbol ID → Whether the symbol has been searched for in the source file.
+            // Source file ID -> symbol ID -> Whether the symbol has been searched for in the source file.
             this.sourceFileToSeenSymbols = [];
           }
           includesSourceFile(sourceFile) {
@@ -162610,7 +162610,7 @@ ${newComment.split("\n").map((c) => ` * ${c}`).join("\n")}
       if (start !== end) {
         const textSpan = createTextSpanFromBounds(start, end);
         if (!selectionRange || // Skip ranges that are identical to the parent
-        !textSpansEqual(textSpan, selectionRange.textSpan) && // Skip ranges that don’t contain the original position
+        !textSpansEqual(textSpan, selectionRange.textSpan) && // Skip ranges that don't contain the original position
         textSpanIntersectsWithPosition(textSpan, pos)) {
           selectionRange = { textSpan, ...selectionRange && { parent: selectionRange } };
         }
