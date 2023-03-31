@@ -6712,6 +6712,9 @@ ${lanes.join("\n")}
       }
       return ~path.length;
     }
+    if (path.startsWith("data:")) {
+      return ~path.length;
+    }
     return 0;
   }
   function getRootLength(path) {
@@ -6870,6 +6873,9 @@ ${lanes.join("\n")}
   }
   function ensureTrailingDirectorySeparator(path) {
     if (!hasTrailingDirectorySeparator(path)) {
+      if (path.startsWith("data:")) {
+        return path;
+      }
       return path + directorySeparator;
     }
     return path;
