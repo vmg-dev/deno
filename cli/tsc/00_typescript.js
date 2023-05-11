@@ -35,7 +35,7 @@ var ts = (() => {
     "src/compiler/corePublic.ts"() {
       "use strict";
       versionMajorMinor = "5.0";
-      version = "5.0.3";
+      version = "5.0.4";
       Comparison = /* @__PURE__ */ ((Comparison3) => {
         Comparison3[Comparison3["LessThan"] = -1] = "LessThan";
         Comparison3[Comparison3["EqualTo"] = 0] = "EqualTo";
@@ -17997,6 +17997,9 @@ ${lanes.join("\n")}
   function moduleResolutionSupportsPackageJsonExportsAndImports(moduleResolution) {
     return moduleResolution >= 3 /* Node16 */ && moduleResolution <= 99 /* NodeNext */ || moduleResolution === 100 /* Bundler */;
   }
+  function shouldResolveJsRequire(compilerOptions) {
+    return !!compilerOptions.noDtsResolution || getEmitModuleResolutionKind(compilerOptions) !== 100 /* Bundler */;
+  }
   function getResolvePackageJsonExports(compilerOptions) {
     const moduleResolution = getEmitModuleResolutionKind(compilerOptions);
     if (!moduleResolutionSupportsPackageJsonExportsAndImports(moduleResolution)) {
@@ -31698,6 +31701,12 @@ ${lanes.join("\n")}
               if (languageVariant === 1 /* JSX */) {
                 return parseJsxElementOrSelfClosingElementOrFragment(
                   /*inExpressionContext*/
+                  true,
+                  /*topInvalidNodePosition*/
+                  void 0,
+                  /*openingTag*/
+                  void 0,
+                  /*mustBeUnary*/
                   true
                 );
               }
@@ -31802,7 +31811,7 @@ ${lanes.join("\n")}
             true
           )), pos);
         }
-        function parseJsxElementOrSelfClosingElementOrFragment(inExpressionContext, topInvalidNodePosition, openingTag) {
+        function parseJsxElementOrSelfClosingElementOrFragment(inExpressionContext, topInvalidNodePosition, openingTag, mustBeUnary = false) {
           const pos = getNodePos();
           const opening = parseJsxOpeningOrSelfClosingElementOrOpeningFragment(inExpressionContext);
           let result;
@@ -31840,7 +31849,7 @@ ${lanes.join("\n")}
             Debug.assert(opening.kind === 282 /* JsxSelfClosingElement */);
             result = opening;
           }
-          if (inExpressionContext && token() === 29 /* LessThanToken */) {
+          if (!mustBeUnary && inExpressionContext && token() === 29 /* LessThanToken */) {
             const topBadPos = typeof topInvalidNodePosition === "undefined" ? result.pos : topInvalidNodePosition;
             const invalidElement = tryParse(() => parseJsxElementOrSelfClosingElementOrFragment(
               /*inExpressionContext*/
@@ -38075,7 +38084,8 @@ ${lanes.join("\n")}
           affectsBuildInfo: true,
           category: Diagnostics.Modules,
           description: Diagnostics.Allow_imports_to_include_TypeScript_file_extensions_Requires_moduleResolution_bundler_and_either_noEmit_or_emitDeclarationOnly_to_be_set,
-          defaultValueDescription: false
+          defaultValueDescription: false,
+          transpileOptionValue: void 0
         },
         {
           name: "resolvePackageJsonExports",
@@ -43773,7 +43783,7 @@ ${lanes.join("\n")}
       }
       if (!isBindingPattern(node.name)) {
         const possibleVariableDecl = node.kind === 257 /* VariableDeclaration */ ? node : node.parent.parent;
-        if (isInJSFile(node) && getEmitModuleResolutionKind(options) !== 100 /* Bundler */ && isVariableDeclarationInitializedToBareOrAccessedRequire(possibleVariableDecl) && !getJSDocTypeTag(node) && !(getCombinedModifierFlags(node) & 1 /* Export */)) {
+        if (isInJSFile(node) && shouldResolveJsRequire(options) && isVariableDeclarationInitializedToBareOrAccessedRequire(possibleVariableDecl) && !getJSDocTypeTag(node) && !(getCombinedModifierFlags(node) & 1 /* Export */)) {
           declareSymbolAndAddToSymbolTable(node, 2097152 /* Alias */, 2097152 /* AliasExcludes */);
         } else if (isBlockOrCatchScoped(node)) {
           bindBlockScopedDeclaration(node, 2 /* BlockScopedVariable */, 111551 /* BlockScopedVariableExcludes */);
@@ -47284,7 +47294,7 @@ ${lanes.join("\n")}
       const hasDefaultOnly = isOnlyImportedAsDefault(specifier);
       const hasSyntheticDefault = canHaveSyntheticDefault(file, moduleSymbol, dontResolveAlias, specifier);
       if (!exportDefaultSymbol && !hasSyntheticDefault && !hasDefaultOnly) {
-        if (hasExportAssignmentSymbol(moduleSymbol) && !(getAllowSyntheticDefaultImports(compilerOptions) || getESModuleInterop(compilerOptions))) {
+        if (hasExportAssignmentSymbol(moduleSymbol) && !allowSyntheticDefaultImports) {
           const compilerOptionName = moduleKind >= 5 /* ES2015 */ ? "allowSyntheticDefaultImports" : "esModuleInterop";
           const exportEqualsSymbol = moduleSymbol.exports.get("export=" /* ExportEquals */);
           const exportAssignment = exportEqualsSymbol.valueDeclaration;
@@ -47452,7 +47462,7 @@ ${lanes.join("\n")}
       if (!isIdentifier(name)) {
         return void 0;
       }
-      const suppressInteropError = name.escapedText === "default" /* Default */ && !!(compilerOptions.allowSyntheticDefaultImports || getESModuleInterop(compilerOptions));
+      const suppressInteropError = name.escapedText === "default" /* Default */ && allowSyntheticDefaultImports;
       const targetSymbol = resolveESModuleSymbol(
         moduleSymbol,
         moduleSpecifier,
@@ -52116,7 +52126,7 @@ ${lanes.join("\n")}
             return;
           }
           let verbatimTargetName = isShorthandAmbientModuleSymbol(target) && getSomeTargetNameFromDeclarations(symbol.declarations) || unescapeLeadingUnderscores(target.escapedName);
-          if (verbatimTargetName === "export=" /* ExportEquals */ && (getESModuleInterop(compilerOptions) || compilerOptions.allowSyntheticDefaultImports)) {
+          if (verbatimTargetName === "export=" /* ExportEquals */ && allowSyntheticDefaultImports) {
             verbatimTargetName = "default" /* Default */;
           }
           const targetName = getInternalSymbolName(target, verbatimTargetName);
@@ -73215,7 +73225,7 @@ ${lanes.join("\n")}
           return anyType;
         }
       }
-      if (isInJSFile(node) && getEmitModuleResolutionKind(compilerOptions) !== 100 /* Bundler */ && isCommonJsRequire(node)) {
+      if (isInJSFile(node) && shouldResolveJsRequire(compilerOptions) && isCommonJsRequire(node)) {
         return resolveExternalModuleTypeByLiteral(node.arguments[0]);
       }
       const returnType = getReturnTypeOfSignature(signature);
@@ -92253,11 +92263,12 @@ ${lanes.join("\n")}
       return visitEachChild(node, visitor, context);
     }
     function visitArrayAssignmentElement(node) {
-      Debug.assertNode(node, isArrayBindingOrAssignmentElement);
-      if (isSpreadElement(node))
-        return visitAssignmentRestElement(node);
-      if (!isOmittedExpression(node))
-        return visitAssignmentElement(node);
+      if (isArrayBindingOrAssignmentElement(node)) {
+        if (isSpreadElement(node))
+          return visitAssignmentRestElement(node);
+        if (!isOmittedExpression(node))
+          return visitAssignmentElement(node);
+      }
       return visitEachChild(node, visitor, context);
     }
     function visitAssignmentProperty(node) {
@@ -117468,7 +117479,7 @@ ${lanes.join("\n")}
           false
         );
       }
-      const shouldProcessRequires = isJavaScriptFile && getEmitModuleResolutionKind(options) !== 100 /* Bundler */;
+      const shouldProcessRequires = isJavaScriptFile && shouldResolveJsRequire(options);
       if (file.flags & 2097152 /* PossiblyContainsDynamicImport */ || shouldProcessRequires) {
         collectDynamicImportOrRequireCalls(file);
       }
@@ -118395,9 +118406,6 @@ ${lanes.join("\n")}
       if (options.verbatimModuleSyntax) {
         if (moduleKind === 2 /* AMD */ || moduleKind === 3 /* UMD */ || moduleKind === 4 /* System */) {
           createDiagnosticForOptionName(Diagnostics.Option_verbatimModuleSyntax_cannot_be_used_when_module_is_set_to_UMD_AMD_or_System, "verbatimModuleSyntax");
-        }
-        if (options.isolatedModules) {
-          createRedundantOptionDiagnostic("isolatedModules", "verbatimModuleSyntax");
         }
         if (options.preserveValueImports) {
           createRedundantOptionDiagnostic("preserveValueImports", "verbatimModuleSyntax");
@@ -169808,6 +169816,7 @@ ${options.prefix}` : "\n" : options.prefix
     setValueDeclaration: () => setValueDeclaration,
     shouldAllowImportingTsExtension: () => shouldAllowImportingTsExtension,
     shouldPreserveConstEnums: () => shouldPreserveConstEnums,
+    shouldResolveJsRequire: () => shouldResolveJsRequire,
     shouldUseUriStyleNodeCoreModules: () => shouldUseUriStyleNodeCoreModules,
     showModuleSpecifier: () => showModuleSpecifier,
     signatureHasLiteralTypes: () => signatureHasLiteralTypes,
