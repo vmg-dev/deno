@@ -33936,7 +33936,8 @@ ${lanes.join("\n")}
           }
           const moduleSpecifier = parseModuleSpecifier();
           let assertClause;
-          if (token() === 132 /* AssertKeyword */ && !scanner2.hasPrecedingLineBreak()) {
+          const hasAssertKeyword = token() === 132 /* AssertKeyword */ || token() === 118 /* WithKeyword */;
+          if (hasAssertKeyword && !scanner2.hasPrecedingLineBreak()) {
             assertClause = parseAssertClause();
           }
           parseSemicolon();
@@ -33956,7 +33957,11 @@ ${lanes.join("\n")}
         function parseAssertClause(skipAssertKeyword) {
           const pos = getNodePos();
           if (!skipAssertKeyword) {
-            parseExpected(132 /* AssertKeyword */);
+            if (token() === 118 /* WithKeyword */) {
+              parseExpected(118 /* WithKeyword */);
+            } else {
+              parseExpected(132 /* AssertKeyword */);
+            }
           }
           const openBracePosition = scanner2.getTokenStart();
           if (parseExpected(19 /* OpenBraceToken */)) {
