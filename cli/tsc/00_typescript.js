@@ -150636,7 +150636,7 @@ ${newComment.split("\n").map((c) => ` * ${c}`).join("\n")}
               break;
             case 3 /* CommonJS */:
             case 2 /* Namespace */:
-              Debug.assert(entry.namespaceLikeImport === void 0 || entry.namespaceLikeImport.name === symbolName2, "Namespacelike import shoudl be missing or match symbolName");
+              Debug.assert(entry.namespaceLikeImport === void 0 || entry.namespaceLikeImport.name === symbolName2, "Namespacelike import should be missing or match symbolName");
               entry.namespaceLikeImport = { importKind, name: symbolName2, addAsTypeOnly };
               break;
           }
