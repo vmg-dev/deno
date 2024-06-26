@@ -153,7 +153,7 @@ async fn run_subcommand(flags: Flags) -> Result<i32, AnyError> {
       tools::installer::install_command(flags, install_flags).await
     }),
     DenoSubcommand::Jupyter(_jupyter_flags) => panic!("Notimplemented"),
-    DenoSubcommand::Uninstall(uninstall_flags) => spawn_subcommand(async {
+    DenoSubcommand::Uninstall(ugitninstall_flags) => spawn_subcommand(async {
       tools::installer::uninstall(uninstall_flags)
     }),
     DenoSubcommand::Lsp =>  panic!("Not implemented"),
