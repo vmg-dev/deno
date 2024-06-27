@@ -276,7 +276,7 @@ fn exit_for_error(error: AnyError) -> ! {
 }
 
 #[allow(clippy::print_stderr)]
-pub(crate) fn unstable_exit_cb(feature: &str, api_name: &str) {
+pub fn unstable_exit_cb(feature: &str, api_name: &str) {
   eprintln!(
     "Unstable API '{api_name}'. The `--unstable-{}` flag must be provided.",
     feature
@@ -286,7 +286,7 @@ pub(crate) fn unstable_exit_cb(feature: &str, api_name: &str) {
 
 // TODO(bartlomieju): remove when `--unstable` flag is removed.
 #[allow(clippy::print_stderr)]
-pub(crate) fn unstable_warn_cb(feature: &str, api_name: &str) {
+pub fn unstable_warn_cb(feature: &str, api_name: &str) {
   eprintln!(
     "⚠️  {}",
     colors::yellow(format!(
