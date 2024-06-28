@@ -94,7 +94,7 @@ pub fn validate_import_attributes_callback(
 }
 
 #[derive(Clone, Default)]
-pub struct ExitCode(Arc<AtomicI32>);
+pub struct ExitCode(pub Arc<AtomicI32>);
 
 impl ExitCode {
   pub fn get(&self) -> i32 {
